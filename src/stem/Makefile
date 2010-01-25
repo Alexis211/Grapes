@@ -24,7 +24,7 @@ clean:
 	rm $(OBJECTS) || exit 0
 
 mrproper: clean
-	rm $(OUT)
+	rm $(OUT) || exit 0
 
 %.o: %.asm
 	echo "* Compiling $<..."

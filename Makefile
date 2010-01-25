@@ -29,7 +29,6 @@ commit: mrproper
 	git add .
 	git commit -a; exit 0
 	git push github
-	git push home
 
 floppy:
 	mkdir mnt; exit 0
