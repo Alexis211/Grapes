@@ -23,7 +23,7 @@ Linker script and memory map
                 0x00100000                loader
                 0xe010003a                . = (. + 0xe0000000)
 
-.text           0xe0100040     0x2928 load address 0x00100040
+.text           0xe0100040     0x29b0 load address 0x00100040
  *(.text)
  .text          0xe0100040       0x25 core/loader_.o
  *fill*         0xe0100065        0x3 00
@@ -51,114 +51,118 @@ Linker script and memory map
                 0xe0100590                timer_uptime
                 0xe010059a                timer_time
                 0xe01005d1                timer_init
- .text          0xe010065c      0x9bb task/idt.o
+ .text          0xe010065c      0x9fa task/idt.o
                 0xe010065c                idt_isrHandler
                 0xe01006f4                idt_irqHandler
-                0xe01007fc                idt_init
-                0xe0101005                idt_handleIrq
- *fill*         0xe0101017        0x9 00
- .text          0xe0101020      0x259 task/idt_.o
-                0xe0101020                gdt_flush
-                0xe010103d                idt_flush
-                0xe01010a5                isr0
-                0xe01010af                isr1
-                0xe01010b9                isr2
-                0xe01010c3                isr3
-                0xe01010cd                isr4
-                0xe01010d7                isr5
-                0xe01010e1                isr6
-                0xe01010eb                isr7
-                0xe01010f5                isr8
-                0xe01010fd                isr9
-                0xe0101107                isr10
-                0xe010110f                isr11
-                0xe0101117                isr12
-                0xe010111f                isr13
-                0xe0101127                isr14
-                0xe010112f                isr15
-                0xe0101139                isr16
-                0xe0101143                isr17
-                0xe010114d                isr18
-                0xe0101157                isr19
-                0xe0101161                isr20
-                0xe010116b                isr21
-                0xe0101175                isr22
-                0xe010117f                isr23
-                0xe0101189                isr24
-                0xe0101193                isr25
-                0xe010119d                isr26
-                0xe01011a7                isr27
-                0xe01011b1                isr28
-                0xe01011bb                isr29
-                0xe01011c5                isr30
-                0xe01011cf                isr31
-                0xe01011d9                irq0
-                0xe01011e3                irq1
-                0xe01011ed                irq2
-                0xe01011f7                irq3
-                0xe0101201                irq4
-                0xe010120b                irq5
-                0xe0101215                irq6
-                0xe010121f                irq7
-                0xe0101229                irq8
-                0xe0101233                irq9
-                0xe010123d                irq10
-                0xe0101247                irq11
-                0xe0101251                irq12
-                0xe010125b                irq13
-                0xe0101265                irq14
-                0xe010126f                irq15
- *fill*         0xe0101279        0x3 00
- .text          0xe010127c      0x2e8 task/task.o
-                0xe010127c                tasking_init
-                0xe010136f                tasking_switch
-                0xe0101401                tasking_handleException
-                0xe0101481                thread_new
- *fill*         0xe0101564        0xc 00
- .text          0xe0101570        0xa task/task_.o
-                0xe0101570                read_eip
-                0xe0101573                task_idle
- *fill*         0xe010157a        0x2 00
- .text          0xe010157c       0xca lib/stdlib.o
-                0xe010157c                memcpy
-                0xe01015b9                memset
-                0xe01015e8                memsetw
-                0xe010161e                strlen
- *fill*         0xe0101646        0x2 00
- .text          0xe0101648      0x173 lib/bitset.o
-                0xe0101648                bitset_set
-                0xe010169c                bitset_clear
-                0xe01016f2                bitset_test
-                0xe0101734                bitset_firstFree
- *fill*         0xe01017bb        0x1 00
- .text          0xe01017bc      0x29f mem/mem.o
-                0xe0101922                kmalloc_page
-                0xe0101969                kfree_page
-                0xe01019a4                kheap_init
-                0xe01019f9                kmalloc
-                0xe0101a37                kfree
- *fill*         0xe0101a5b        0x1 00
- .text          0xe0101a5c      0x513 mem/paging.o
-                0xe0101a5c                frame_alloc
-                0xe0101a89                frame_free
-                0xe0101aa4                paging_init
-                0xe0101c3c                paging_cleanup
-                0xe0101c97                pagedir_switch
-                0xe0101cc6                paging_fault
-                0xe0101da1                pagedir_getPage
-                0xe0101e80                page_map
-                0xe0101f08                page_unmap
-                0xe0101f2b                page_unmapFree
- *fill*         0xe0101f6f        0x1 00
- .text          0xe0101f70      0x19f mem/gdt.o
-                0xe0101fff                gdt_init
- *fill*         0xe010210f        0x1 00
- .text          0xe0102110      0x858 mem/heap.o
-                0xe01022a0                heap_create
-                0xe0102673                heap_alloc
-                0xe01027d4                heap_free
+                0xe0100795                idt_syscallHandler
+                0xe0100816                idt_init
+                0xe0101044                idt_handleIrq
+ *fill*         0xe0101056        0xa 00
+ .text          0xe0101060      0x293 task/idt_.o
+                0xe0101060                gdt_flush
+                0xe010107d                idt_flush
+                0xe0101115                isr0
+                0xe010111f                isr1
+                0xe0101129                isr2
+                0xe0101133                isr3
+                0xe010113d                isr4
+                0xe0101147                isr5
+                0xe0101151                isr6
+                0xe010115b                isr7
+                0xe0101165                isr8
+                0xe010116d                isr9
+                0xe0101177                isr10
+                0xe010117f                isr11
+                0xe0101187                isr12
+                0xe010118f                isr13
+                0xe0101197                isr14
+                0xe010119f                isr15
+                0xe01011a9                isr16
+                0xe01011b3                isr17
+                0xe01011bd                isr18
+                0xe01011c7                isr19
+                0xe01011d1                isr20
+                0xe01011db                isr21
+                0xe01011e5                isr22
+                0xe01011ef                isr23
+                0xe01011f9                isr24
+                0xe0101203                isr25
+                0xe010120d                isr26
+                0xe0101217                isr27
+                0xe0101221                isr28
+                0xe010122b                isr29
+                0xe0101235                isr30
+                0xe010123f                isr31
+                0xe0101249                irq0
+                0xe0101253                irq1
+                0xe010125d                irq2
+                0xe0101267                irq3
+                0xe0101271                irq4
+                0xe010127b                irq5
+                0xe0101285                irq6
+                0xe010128f                irq7
+                0xe0101299                irq8
+                0xe01012a3                irq9
+                0xe01012ad                irq10
+                0xe01012b7                irq11
+                0xe01012c1                irq12
+                0xe01012cb                irq13
+                0xe01012d5                irq14
+                0xe01012df                irq15
+                0xe01012e9                syscall64
+ *fill*         0xe01012f3        0x1 00
+ .text          0xe01012f4      0x2e8 task/task.o
+                0xe01012f4                tasking_init
+                0xe01013e7                tasking_switch
+                0xe0101479                tasking_handleException
+                0xe01014f9                thread_new
+ *fill*         0xe01015dc        0x4 00
+ .text          0xe01015e0        0xa task/task_.o
+                0xe01015e0                read_eip
+                0xe01015e3                task_idle
+ *fill*         0xe01015ea        0x2 00
+ .text          0xe01015ec       0x15 task/syscall.o
+ *fill*         0xe0101601        0x3 00
+ .text          0xe0101604       0xca lib/stdlib.o
+                0xe0101604                memcpy
+                0xe0101641                memset
+                0xe0101670                memsetw
+                0xe01016a6                strlen
+ *fill*         0xe01016ce        0x2 00
+ .text          0xe01016d0      0x173 lib/bitset.o
+                0xe01016d0                bitset_set
+                0xe0101724                bitset_clear
+                0xe010177a                bitset_test
+                0xe01017bc                bitset_firstFree
+ *fill*         0xe0101843        0x1 00
+ .text          0xe0101844      0x29f mem/mem.o
+                0xe01019aa                kmalloc_page
+                0xe01019f1                kfree_page
+                0xe0101a2c                kheap_init
+                0xe0101a81                kmalloc
+                0xe0101abf                kfree
+ *fill*         0xe0101ae3        0x1 00
+ .text          0xe0101ae4      0x513 mem/paging.o
+                0xe0101ae4                frame_alloc
+                0xe0101b11                frame_free
+                0xe0101b2c                paging_init
+                0xe0101cc4                paging_cleanup
+                0xe0101d1f                pagedir_switch
+                0xe0101d4e                paging_fault
+                0xe0101e29                pagedir_getPage
+                0xe0101f08                page_map
+                0xe0101f90                page_unmap
+                0xe0101fb3                page_unmapFree
+ *fill*         0xe0101ff7        0x1 00
+ .text          0xe0101ff8      0x19f mem/gdt.o
+                0xe0102087                gdt_init
+ *fill*         0xe0102197        0x1 00
+ .text          0xe0102198      0x858 mem/heap.o
+                0xe0102328                heap_create
+                0xe01026fb                heap_alloc
+                0xe010285c                heap_free
 
-.iplt           0xe0102968        0x0 load address 0x00102968
+.iplt           0xe01029f0        0x0 load address 0x001029f0
  .iplt          0x00000000        0x0 core/loader_.o
 
 .rodata         0xe0103000      0x1bb load address 0x00103000
@@ -177,7 +181,7 @@ Linker script and memory map
  .rel.iplt      0x00000000        0x0 core/loader_.o
  .rel.text      0x00000000        0x0 core/loader_.o
 
-.data           0xe0104000        0xc load address 0x00104000
+.data           0xe0104000       0x20 load address 0x00104000
  *(.data)
  .data          0xe0104000        0x0 core/kmain.o
  .data          0xe0104000        0x4 core/sys.o
@@ -186,14 +190,16 @@ Linker script and memory map
  .data          0xe0104008        0x0 task/idt.o
  .data          0xe0104008        0x4 task/task.o
                 0xe0104008                nextpid
- .data          0xe010400c        0x0 lib/stdlib.o
- .data          0xe010400c        0x0 lib/bitset.o
- .data          0xe010400c        0x0 mem/mem.o
- .data          0xe010400c        0x0 mem/paging.o
- .data          0xe010400c        0x0 mem/gdt.o
- .data          0xe010400c        0x0 mem/heap.o
+ .data          0xe010400c       0x14 task/syscall.o
+                0xe010400c                syscalls
+ .data          0xe0104020        0x0 lib/stdlib.o
+ .data          0xe0104020        0x0 lib/bitset.o
+ .data          0xe0104020        0x0 mem/mem.o
+ .data          0xe0104020        0x0 mem/paging.o
+ .data          0xe0104020        0x0 mem/gdt.o
+ .data          0xe0104020        0x0 mem/heap.o
 
-.igot.plt       0xe010400c        0x0 load address 0x0010400c
+.igot.plt       0xe0104020        0x0 load address 0x00104020
  .igot.plt      0x00000000        0x0 core/loader_.o
 
 .bss            0xe0104020     0x4950 load address 0x00104020
@@ -218,6 +224,7 @@ Linker script and memory map
                 0xe01088a0                processes
                 0xe01088a4                threads
                 0xe01088a8                current_thread
+ .bss           0xe01088ac        0x0 task/syscall.o
  .bss           0xe01088ac        0x0 lib/stdlib.o
  .bss           0xe01088ac        0x0 lib/bitset.o
  *fill*         0xe01088ac       0x14 00
@@ -241,6 +248,7 @@ LOAD task/idt.o
 LOAD task/idt_.o
 LOAD task/task.o
 LOAD task/task_.o
+LOAD task/syscall.o
 LOAD lib/stdlib.o
 LOAD lib/bitset.o
 LOAD mem/mem.o
@@ -249,20 +257,21 @@ LOAD mem/gdt.o
 LOAD mem/heap.o
 OUTPUT(stem.elf elf32-i386)
 
-.comment        0x00000000       0x27
- .comment       0x00000000       0x27 core/kmain.o
-                                 0x28 (size before relaxing)
- .comment       0x00000000       0x28 core/sys.o
- .comment       0x00000000       0x28 core/monitor.o
- .comment       0x00000000       0x28 task/timer.o
- .comment       0x00000000       0x28 task/idt.o
- .comment       0x00000000       0x28 task/task.o
- .comment       0x00000000       0x28 lib/stdlib.o
- .comment       0x00000000       0x28 lib/bitset.o
- .comment       0x00000000       0x28 mem/mem.o
- .comment       0x00000000       0x28 mem/paging.o
- .comment       0x00000000       0x28 mem/gdt.o
- .comment       0x00000000       0x28 mem/heap.o
+.comment        0x00000000       0x11
+ .comment       0x00000000       0x11 core/kmain.o
+                                 0x12 (size before relaxing)
+ .comment       0x00000000       0x12 core/sys.o
+ .comment       0x00000000       0x12 core/monitor.o
+ .comment       0x00000000       0x12 task/timer.o
+ .comment       0x00000000       0x12 task/idt.o
+ .comment       0x00000000       0x12 task/task.o
+ .comment       0x00000000       0x12 task/syscall.o
+ .comment       0x00000000       0x12 lib/stdlib.o
+ .comment       0x00000000       0x12 lib/bitset.o
+ .comment       0x00000000       0x12 mem/mem.o
+ .comment       0x00000000       0x12 mem/paging.o
+ .comment       0x00000000       0x12 mem/gdt.o
+ .comment       0x00000000       0x12 mem/heap.o
 
 .note.GNU-stack
                 0x00000000        0x0
@@ -278,6 +287,8 @@ OUTPUT(stem.elf elf32-i386)
                 0x00000000        0x0 task/idt.o
  .note.GNU-stack
                 0x00000000        0x0 task/task.o
+ .note.GNU-stack
+                0x00000000        0x0 task/syscall.o
  .note.GNU-stack
                 0x00000000        0x0 lib/stdlib.o
  .note.GNU-stack

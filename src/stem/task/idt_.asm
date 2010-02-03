@@ -63,6 +63,7 @@ idt_flush:
 
 COMMONSTUB isr
 COMMONSTUB irq
+COMMONSTUB syscall
 
 ;************************************************************************************
 
@@ -90,6 +91,15 @@ COMMONSTUB irq
     push byte %1	;push irq number
     push byte %2	;push int number
     jmp irq_common_stub
+%endmacro
+
+%macro SYSCALL 1
+  [GLOBAL syscall%1]
+  syscall%1:
+    cli
+    push byte 0
+    push byte %1
+    jmp syscall_common_stub
 %endmacro
 
 ISR_NOERRCODE 0
@@ -141,3 +151,5 @@ IRQ	12,	44
 IRQ	13,	45
 IRQ	14,	46
 IRQ	15,	47
+
+SYSCALL 64

@@ -1,0 +1,11 @@
+Syscalls pass by int64. The identifier of the called function is in eax, parameters
+are in ebx, ecx, edx, esi, edi.
+
+Syscall list :
+
+id=eax	Name			Parameters				Description
+  0		thread_exit		ebx: return value (int)	Signal kernel that current thread has finished
+  1		schedule		none					Switch to next thread (might be the current one)
+  2		thread_sleep	ebx: time (int) msecs	Tell kernel to put current thread to sleep
+  3		process_exit	ebx: return value (int)	Tell kernel to end current process, cleaning up everything
+

@@ -3,6 +3,7 @@
 #include <core/sys.h>
 #include <mem/paging.h>
 #include "task.h"
+#include "syscall.h"
 
 #include <stdlib.h>
 
@@ -56,6 +57,8 @@ extern void irq13();
 extern void irq14();
 extern void irq15();
 
+extern void syscall64();
+
 extern void idt_flush(int32_t ptr);
 
 struct idt_entry idt_entries[256];
@@ -89,6 +92,10 @@ void idt_irqHandler(struct registers regs) {
 		monitor_write("Unhandled IRQ "); monitor_writeHex(regs.int_no - 32); monitor_write("\n");
 	}
 	if (doSwitch) tasking_switch();
+}
+
+void idt_syscallHandler(struct registers regs) {
+	syscalls[regs.eax](&regs);
 }
 
 static void idt_setGate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags) {
@@ -167,6 +174,8 @@ void idt_init() {
 	idt_setGate(45, (int32_t)irq13, 0x08, 0x8E);
 	idt_setGate(46, (int32_t)irq14, 0x08, 0x8E);
 	idt_setGate(47, (int32_t)irq15, 0x08, 0x8E);
+
+	idt_setGate(64, (int32_t)syscall64, 0x08, 0x8E);
 
 	idt_flush((int32_t)&idt_ptr);
 
