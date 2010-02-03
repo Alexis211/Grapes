@@ -1,7 +1,7 @@
 #ifndef DEF_BITSET_H
 #define DEF_BITSET_H
 
-#include "../types.h"
+#include <types.h>
 
 #define INDEX_FROM_BIT(a) (a/(8*4))
 #define OFFSET_FROM_BIT(a) (a%(8*4))

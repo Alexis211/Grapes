@@ -1,13 +1,13 @@
-#include "types.h"
+#include <types.h>
 #include "multiboot.h"
 #include "monitor.h"
-#include "idt.h"
-#include "gdt.h"
-#include "paging.h"
-#include "mem.h"
 #include "sys.h"
-#include "timer.h"
-#include "task.h"
+#include <task/idt.h>
+#include <task/timer.h>
+#include <task/task.h>
+#include <mem/gdt.h>
+#include <mem/paging.h>
+#include <mem/mem.h>
 
 void kmain_othertask(void *data) {
 	while(1) monitor_write("2task ");

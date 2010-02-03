@@ -1,8 +1,8 @@
 #ifndef DEF_PAGING_H
 #define DEF_PAGING_H
 
-#include "types.h"
-#include "idt.h"
+#include <types.h>
+#include <task/idt.h>
 
 struct page {
 	uint32_t present	: 1;	//Page mapped to a frame ?

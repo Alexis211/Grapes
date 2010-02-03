@@ -1,8 +1,8 @@
 #include "mem.h"
-#include "sys.h"
+#include <core/sys.h>
+#include <core/monitor.h>
 #include "paging.h"
 #include "heap.h"
-#include "monitor.h"
 
 #define FREEPAGESTOKEEP 5
 

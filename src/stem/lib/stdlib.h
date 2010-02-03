@@ -1,7 +1,7 @@
 #ifndef DEF_STDLIB_H
 #define DEF_STDLIB_H
 
-#include "../types.h"
+#include <types.h>
 
 void *memcpy(void *dest, const void *src, int count);
 uint8_t *memset(uint8_t *dest, uint8_t val, int count);

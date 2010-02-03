@@ -1,9 +1,9 @@
 #include "paging.h"
-#include "lib/bitset.h"
-#include "lib/stdlib.h"
-#include "monitor.h"
+#include <bitset.h>
+#include <stdlib.h>
+#include <core/monitor.h>
 #include "mem.h"
-#include "sys.h"
+#include <core/sys.h>
 
 static struct bitset frames;
 

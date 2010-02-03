@@ -1,7 +1,7 @@
 #ifndef DEF_MEM_H
 #define DEF_MEM_H
 
-#include "types.h"
+#include <types.h>
 
 void* kmalloc_page(size_t *phys);
 void kfree_page(void* page);

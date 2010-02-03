@@ -1,8 +1,8 @@
 #include "task.h"
-#include "sys.h"
-#include "mem.h"
+#include <core/sys.h>
+#include <core/monitor.h>
+#include <mem/mem.h>
 #include "timer.h"
-#include "monitor.h"
 
 #define KSTACKSIZE 0x8000
 

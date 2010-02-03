@@ -1,8 +1,8 @@
 #ifndef DEF_TASK_H
 #define DEF_TASK_H
 
-#include "types.h"
-#include "paging.h"
+#include <types.h>
+#include <mem/paging.h>
 #include "idt.h"
 
 struct process {

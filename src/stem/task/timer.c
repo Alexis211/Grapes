@@ -1,7 +1,7 @@
 #include "timer.h"
 #include "idt.h"
-#include "sys.h"
-#include "monitor.h"
+#include <core/sys.h>
+#include <core/monitor.h>
 
 static uint32_t tick = 0, frequency = 0, uptime = 0;
 

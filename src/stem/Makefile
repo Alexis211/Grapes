@@ -1,6 +1,6 @@
 
 CC = gcc
-CFLAGS = -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -Wall -Wextra
+CFLAGS = -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -Wall -Wextra -I . -I ./lib
 
 LD = ld
 LDFLAGS = -T link.ld
@@ -8,11 +8,11 @@ LDFLAGS = -T link.ld
 ASM = nasm
 AFLAGS = -f elf
 
-OBJECTS = loader_.o kmain.o sys.o \
-		  monitor.o timer.o \
-		  idt.o idt_.o task.o task_.o\
+OBJECTS = core/loader_.o core/kmain.o core/sys.o \
+		  core/monitor.o task/timer.o \
+		  task/idt.o task/idt_.o task/task.o task/task_.o\
 		  lib/stdlib.o lib/bitset.o \
-		  mem.o paging.o gdt.o heap.o
+		  mem/mem.o mem/paging.o mem/gdt.o mem/heap.o
 OUT = stem.elf
 
 all: $(OBJECTS)
@@ -20,8 +20,8 @@ all: $(OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) -o $(OUT) -Map stem.map
 
 clean:
-	rm *.o || exit 0
 	rm $(OBJECTS) || exit 0
+	rm *.o */*.o || exit 0
 
 mrproper: clean
 	rm $(OUT) || exit 0

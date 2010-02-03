@@ -1,10 +1,10 @@
 #include "idt.h"
-#include "monitor.h"
-#include "paging.h"
-#include "sys.h"
+#include <core/monitor.h>
+#include <core/sys.h>
+#include <mem/paging.h>
 #include "task.h"
 
-#include "lib/stdlib.h"
+#include <stdlib.h>
 
 extern void isr0();
 extern void isr1();

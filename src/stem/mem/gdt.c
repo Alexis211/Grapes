@@ -1,6 +1,6 @@
 #include "gdt.h"
-#include "lib/stdlib.h"
-#include "monitor.h"
+#include <stdlib.h>
+#include <core/monitor.h>
 
 extern void gdt_flush(uint32_t);	//ASM (idt_.asm)
 
