@@ -76,6 +76,10 @@ struct page_directory *pagedir_new() {
 	pd->tablesPhysical = kmalloc_page(&pd->physicalAddr);
 	pd->mappedSegs = 0;
 
+	for (i = 0; i < 1024; i++) {
+		pd->tables[i] = 0; pd->tablesPhysical[i] = 0;
+	}
+
 	for (i = 768; i < 1024; i++) {
 		pd->tables[i] = kernel_pagedir->tables[i];
 		pd->tablesPhysical[i] = kernel_pagedir->tablesPhysical[i];

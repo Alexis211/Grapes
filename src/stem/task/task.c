@@ -25,7 +25,7 @@ struct thread *threads = 0, *current_thread = 0, *idle_thread;
 
 uint32_t tasking_tmpStack[0x4000];
 
-void tasking_init(thread_entry whereToGo, void *data) {
+void tasking_init() {
 	cli();
 	kernel_process = kmalloc(sizeof(struct process));	//This process must be hidden to users
 	kernel_process->pid = kernel_process->uid = kernel_process->threads = 0;
@@ -36,10 +36,8 @@ void tasking_init(thread_entry whereToGo, void *data) {
 	current_thread = 0;
 	idle_thread = thread_new(kernel_process, task_idle, 0);
 	threads = 0;	//Do not include idle thread in threads
-	thread_new(kernel_process, whereToGo, data);
 	sti();
-	monitor_write("Tasking starting\n");
-	tasking_switch();
+	monitor_write("Tasking set up\n");
 }
 
 static struct thread *thread_next() {

@@ -41,7 +41,7 @@ struct thread {
 
 extern struct thread *current_thread;
 
-void tasking_init(thread_entry whereToGo, void *data);
+void tasking_init();
 void tasking_switch();
 void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint32_t tablePhysical);
 uint32_t tasking_handleException(struct registers *regs);

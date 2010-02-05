@@ -35,6 +35,7 @@ static void get_free_pages() {
 			freepages[freepagecount].virt = i;
 			freepages[freepagecount].phys = frame_alloc() * 0x1000;
 			page_map(pagedir_getPage(kernel_pagedir, i, 0), i, 0, 0);
+			freepagecount++;
 		} else {
 			if (mem_placementAddr & 0xFFFFF000) {
 				mem_placementAddr &= 0xFFFFF000;

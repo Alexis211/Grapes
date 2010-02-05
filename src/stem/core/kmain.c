@@ -8,29 +8,22 @@
 #include <mem/gdt.h>
 #include <mem/paging.h>
 #include <mem/mem.h>
-
-void kmain_othertask(void *data) {
-	uint32_t i;
-	for(i = 0; i < 100; i++) {
-		monitor_write("2task ");
-		thread_sleep(0);
-	}
-	process_exit(0);
-}
-
-void kmain_stage2(void *data) {
-	sti();
-	thread_new(current_thread->process, kmain_othertask, 0);
-	while (1) {
-		monitor_write("TASK1 ");
-		thread_sleep(0);
-	}
-}
+#include <linker/elf.h>
 
 void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 	size_t totalRam = 0;
+	uint32_t i;
 
 	mem_placementAddr = (size_t)&end;
+	mbd->cmdline += 0xE0000000; mbd->mods_addr += 0xE0000000;
+	struct module_t *mods = (struct module_t*)mbd->mods_addr;
+	for (i = 0; i < mbd->mods_count; i++) {
+		mods[i].mod_start += 0xE0000000;
+		mods[i].mod_end += 0xE0000000;
+		mods[i].string += 0xE0000000;
+		if (mods[i].mod_end > mem_placementAddr)
+			mem_placementAddr = (mods[i].mod_end & 0xFFFFF000) + 0x1000;
+	}
 
 	monitor_clear();
 
@@ -48,5 +41,23 @@ void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 	paging_cleanup();
 	kheap_init();
 	timer_init(20);
-	tasking_init(kmain_stage2, 0);
+	tasking_init();
+	
+	monitor_write("Loading modules...\n");
+	for (i = 0; i < mbd->mods_count; i++) {
+		monitor_write((char*)mods[i].string);
+		if (elf_check((uint8_t*)mods[i].mod_start)) {
+			monitor_write(" : Invalid ELF file\n");
+		} else {
+			if (elf_exec((uint8_t*)mods[i].mod_start) == 0) {
+				monitor_write(" : Error loading\n");
+			} else {
+				monitor_write(" : OK\n");
+			}
+		}
+	}
+
+	monitor_write("Passing conroll to loaded modules...\n");
+	sti();
+	tasking_switch();
 }

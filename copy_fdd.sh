@@ -7,6 +7,7 @@ cp menu_fdd.cfg mnt/boot/menu.cfg
 
 # copy kernel
 cp src/stem/stem.elf mnt
+cp src/grapes/test/test mnt
 
 #echo "*** Launching a BASH shell, if you want to do any maintenance ***"
 #bash || exit 0

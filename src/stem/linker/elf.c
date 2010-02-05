@@ -2,6 +2,7 @@
 #include <mem/paging.h>
 #include <mem/seg.h>
 #include <stdlib.h>
+#include <core/sys.h>
 
 int elf_check(uint8_t *data) {
 	struct elf_ehdr *h = (struct elf_ehdr*)data;
@@ -28,4 +29,16 @@ thread_entry elf_load(uint8_t *data, struct process* process) {
 		}
 	}
 	return (thread_entry)ehdr->e_entry;
+}
+
+struct process* elf_exec(uint8_t *data) {
+	if (elf_check(data)) return 0;
+	
+	struct process* p = process_new(0, 0, PL_DRIVER);
+
+	thread_entry e = elf_load(data, p);
+
+	thread_new(p, e, 0);
+
+	return p;
 }
