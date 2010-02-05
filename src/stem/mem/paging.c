@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <core/monitor.h>
 #include "mem.h"
+#include "seg.h"
 #include <core/sys.h>
+#include <task/task.h>
 
 static struct bitset frames;
 
@@ -66,17 +68,45 @@ void pagedir_switch(struct page_directory *pd) {
 	asm volatile("mov %0, %%cr0" : : "r"(cr0));
 }
 
+struct page_directory *pagedir_new() {
+	uint32_t i;
+
+	struct page_directory *pd = kmalloc(sizeof(struct page_directory));
+	pd->tablesPhysical = kmalloc_page(&pd->physicalAddr);
+
+	for (i = 768; i < 1024; i++) {
+		pd->tables[i] = kernel_pagedir->tables[i];
+		pd->tablesPhysical[i] = kernel_pagedir->tablesPhysical[i];
+	}
+
+	return pd;
+}
+
 uint32_t paging_fault(struct registers *regs) {
 	size_t addr;
+	struct segment_map *seg = 0;
 	asm volatile("mov %%cr2, %0" : "=r"(addr));
-	monitor_write("PageFault ");
-	if (regs->err_code & 0x1) monitor_write("present ");
-	if (regs->err_code & 0x2) monitor_write("write ");
-	if (regs->err_code & 0x4) monitor_write("user ");
-	if (regs->err_code & 0x8) monitor_write("rsvd ");
-	if (regs->err_code & 0x10) monitor_write("instructionfetch ");
-	monitor_write("@"); monitor_writeHex(addr); monitor_write("\n");
-	PANIC("Page fault");
+
+	seg = current_pagedir->mappedSegs;
+	while (seg) {
+		if (seg->start >= addr && seg->start + seg->len < addr) break;
+		seg = seg->next;
+	}
+
+	if (seg != 0) {
+		if (seg->seg->handle_fault(seg, addr, (regs->err_code & 0x2)) != 0) seg = 0;
+	}
+
+	if (seg == 0) {
+		monitor_write("PageFault ");
+		if (regs->err_code & 0x1) monitor_write("present ");
+		if (regs->err_code & 0x2) monitor_write("write ");
+		if (regs->err_code & 0x4) monitor_write("user ");
+		if (regs->err_code & 0x8) monitor_write("rsvd ");
+		if (regs->err_code & 0x10) monitor_write("instructionfetch ");
+		monitor_write("@"); monitor_writeHex(addr); monitor_write("\n");
+		return 1;
+	}
 	return 0;
 }
 
@@ -88,6 +118,8 @@ struct page *pagedir_getPage(struct page_directory *pd, uint32_t address, int ma
 		return &pd->tables[table_idx]->pages[address %  1024];
 	} else if (make) {
 		pd->tables[table_idx] = kmalloc_page(pd->tablesPhysical + table_idx);
+		if (table_idx >= 768)
+			tasking_updateKernelPagetable(table_idx, pd->tables[table_idx], pd->tablesPhysical[table_idx]);
 		memset((uint8_t*)pd->tables[table_idx], 0, 0x1000);
 		pd->tablesPhysical[table_idx] |= 0x07;
 		return &pd->tables[table_idx]->pages[address %  1024];

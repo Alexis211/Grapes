@@ -8,4 +8,4 @@ id=eax	Name			Parameters				Description
   1		schedule		none					Switch to next thread (might be the current one)
   2		thread_sleep	ebx: time (int) msecs	Tell kernel to put current thread to sleep
   3		process_exit	ebx: return value (int)	Tell kernel to end current process, cleaning up everything
-
+  4		printk			ebx: addr of a string	Print a message to screen

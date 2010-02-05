@@ -67,7 +67,7 @@ struct idt_ptr idt_ptr;
 static int_callback irq_handlers[16] = {0};
 
 void idt_isrHandler(struct registers regs) {
-	if ((regs.int_no == 14 && paging_fault(&regs) == 0) || regs.int_no != 14) {
+	if ((regs.int_no == 14 && paging_fault(&regs) != 0) || regs.int_no != 14) {
 		if (tasking_handleException(&regs) == 0) {
 			monitor_write("  >>  >> SOMETHING BAD HAPPENNED << <<\n");
 			monitor_write("Unhandled exception ");

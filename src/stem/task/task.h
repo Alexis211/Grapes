@@ -6,7 +6,7 @@
 #include "idt.h"
 
 struct process {
-	uint32_t pid, uid;
+	uint32_t pid, uid, privilege, threads;
 	struct process *parent;
 	struct page_directory *pagedir;
 
@@ -16,6 +16,11 @@ struct process {
 #define TS_RUNNING 0	
 #define TS_SLEEPING 1	//Sleeping for a defined amount of time
 #define TS_WAIKWAIT 2	//Waiting to be waked up by something precise (thread currently blocked)
+
+#define PL_USER 3
+#define PL_SERVICE 2
+#define PL_DRIVER 1
+#define PL_KERNEL 0
 
 typedef void (*thread_entry)(void*);
 
@@ -34,8 +39,10 @@ extern struct thread *current_thread;
 
 void tasking_init(thread_entry whereToGo, void *data);
 void tasking_switch();
+void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint32_t tablePhysical);
 uint32_t tasking_handleException(struct registers *regs);
 
-void thread_new(struct process *proc, thread_entry entry_point, void *data);
+struct thread * thread_new(struct process *proc, thread_entry entry_point, void *data);
+struct process* process_new(struct process *parent, uint32_t uid, uint32_t privilege);
 
 #endif

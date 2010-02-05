@@ -4,7 +4,10 @@ Common symbol       size              file
 
 idt_ptr             0x6               task/idt.o
 mem_placementAddr   0x4               mem/mem.o
+tasking_tmpStack    0x10000           task/task.o
 idt_entries         0x800             task/idt.o
+kernel_process      0x4               task/task.o
+idle_thread         0x4               task/task.o
 current_pagedir     0x4               mem/paging.o
 kernel_pagedir      0x4               mem/paging.o
 
@@ -23,7 +26,7 @@ Linker script and memory map
                 0x00100000                loader
                 0xe010003a                . = (. + 0xe0000000)
 
-.text           0xe0100040     0x29b0 load address 0x00100040
+.text           0xe0100040     0x2eed load address 0x00100040
  *(.text)
  .text          0xe0100040       0x25 core/loader_.o
  *fill*         0xe0100065        0x3 00
@@ -111,61 +114,72 @@ Linker script and memory map
                 0xe01012df                irq15
                 0xe01012e9                syscall64
  *fill*         0xe01012f3        0x1 00
- .text          0xe01012f4      0x2e8 task/task.o
+ .text          0xe01012f4      0x3dd task/task.o
                 0xe01012f4                tasking_init
-                0xe01013e7                tasking_switch
-                0xe0101479                tasking_handleException
-                0xe01014f9                thread_new
- *fill*         0xe01015dc        0x4 00
- .text          0xe01015e0        0xa task/task_.o
-                0xe01015e0                read_eip
-                0xe01015e3                task_idle
- *fill*         0xe01015ea        0x2 00
- .text          0xe01015ec       0x15 task/syscall.o
- *fill*         0xe0101601        0x3 00
- .text          0xe0101604       0xca lib/stdlib.o
-                0xe0101604                memcpy
-                0xe0101641                memset
-                0xe0101670                memsetw
-                0xe01016a6                strlen
- *fill*         0xe01016ce        0x2 00
- .text          0xe01016d0      0x173 lib/bitset.o
-                0xe01016d0                bitset_set
-                0xe0101724                bitset_clear
-                0xe010177a                bitset_test
-                0xe01017bc                bitset_firstFree
- *fill*         0xe0101843        0x1 00
- .text          0xe0101844      0x29f mem/mem.o
-                0xe01019aa                kmalloc_page
-                0xe01019f1                kfree_page
-                0xe0101a2c                kheap_init
-                0xe0101a81                kmalloc
-                0xe0101abf                kfree
- *fill*         0xe0101ae3        0x1 00
- .text          0xe0101ae4      0x513 mem/paging.o
-                0xe0101ae4                frame_alloc
-                0xe0101b11                frame_free
-                0xe0101b2c                paging_init
-                0xe0101cc4                paging_cleanup
-                0xe0101d1f                pagedir_switch
-                0xe0101d4e                paging_fault
-                0xe0101e29                pagedir_getPage
-                0xe0101f08                page_map
-                0xe0101f90                page_unmap
-                0xe0101fb3                page_unmapFree
- *fill*         0xe0101ff7        0x1 00
- .text          0xe0101ff8      0x19f mem/gdt.o
-                0xe0102087                gdt_init
- *fill*         0xe0102197        0x1 00
- .text          0xe0102198      0x858 mem/heap.o
-                0xe0102328                heap_create
-                0xe01026fb                heap_alloc
-                0xe010285c                heap_free
+                0xe0101410                tasking_switch
+                0xe01014a2                tasking_updateKernelPagetable
+                0xe01014ec                tasking_handleException
+                0xe010156c                thread_new
+                0xe0101661                process_new
+ *fill*         0xe01016d1        0xf 00
+ .text          0xe01016e0        0xa task/task_.o
+                0xe01016e0                read_eip
+                0xe01016e3                task_idle
+ *fill*         0xe01016ea        0x2 00
+ .text          0xe01016ec       0x33 task/syscall.o
+ *fill*         0xe010171f        0x1 00
+ .text          0xe0101720       0xca lib/stdlib.o
+                0xe0101720                memcpy
+                0xe010175d                memset
+                0xe010178c                memsetw
+                0xe01017c2                strlen
+ *fill*         0xe01017ea        0x2 00
+ .text          0xe01017ec      0x173 lib/bitset.o
+                0xe01017ec                bitset_set
+                0xe0101840                bitset_clear
+                0xe0101896                bitset_test
+                0xe01018d8                bitset_firstFree
+ *fill*         0xe010195f        0x1 00
+ .text          0xe0101960      0x29f mem/mem.o
+                0xe0101ac6                kmalloc_page
+                0xe0101b0d                kfree_page
+                0xe0101b48                kheap_init
+                0xe0101b9d                kmalloc
+                0xe0101bdb                kfree
+ *fill*         0xe0101bff        0x1 00
+ .text          0xe0101c00      0x645 mem/paging.o
+                0xe0101c00                frame_alloc
+                0xe0101c2d                frame_free
+                0xe0101c48                paging_init
+                0xe0101de0                paging_cleanup
+                0xe0101e3b                pagedir_switch
+                0xe0101e6a                pagedir_new
+                0xe0101ef2                paging_fault
+                0xe010203f                pagedir_getPage
+                0xe0102156                page_map
+                0xe01021de                page_unmap
+                0xe0102201                page_unmapFree
+ *fill*         0xe0102245        0x3 00
+ .text          0xe0102248      0x19f mem/gdt.o
+                0xe01022d7                gdt_init
+ *fill*         0xe01023e7        0x1 00
+ .text          0xe01023e8      0x858 mem/heap.o
+                0xe0102578                heap_create
+                0xe010294b                heap_alloc
+                0xe0102aac                heap_free
+ .text          0xe0102c40      0x2ed mem/seg.o
+                0xe0102c40                seg_map
+                0xe0102cae                seg_unmap
+                0xe0102d8d                simpleseg_make
+                0xe0102e0a                simpleseg_map
+                0xe0102e40                simpleseg_unmap
+                0xe0102e93                simpleseg_handleFault
+                0xe0102f28                simpleseg_delete
 
-.iplt           0xe01029f0        0x0 load address 0x001029f0
+.iplt           0xe0102f30        0x0 load address 0x00102f2d
  .iplt          0x00000000        0x0 core/loader_.o
 
-.rodata         0xe0103000      0x1bb load address 0x00103000
+.rodata         0xe0103000      0x1a3 load address 0x00103000
  *(.rodata)
  .rodata        0xe0103000       0x52 core/kmain.o
  .rodata        0xe0103052       0x2c core/sys.o
@@ -174,14 +188,14 @@ Linker script and memory map
  .rodata        0xe0103090       0x78 task/idt.o
  .rodata        0xe0103108       0x12 task/task.o
  .rodata        0xe010311a       0x10 mem/mem.o
- .rodata        0xe010312a       0x89 mem/paging.o
- .rodata        0xe01031b3        0x8 mem/gdt.o
+ .rodata        0xe010312a       0x71 mem/paging.o
+ .rodata        0xe010319b        0x8 mem/gdt.o
 
-.rel.dyn        0xe01031bc        0x0 load address 0x001031bb
+.rel.dyn        0xe01031a4        0x0 load address 0x001031a3
  .rel.iplt      0x00000000        0x0 core/loader_.o
  .rel.text      0x00000000        0x0 core/loader_.o
 
-.data           0xe0104000       0x20 load address 0x00104000
+.data           0xe0104000       0x24 load address 0x00104000
  *(.data)
  .data          0xe0104000        0x0 core/kmain.o
  .data          0xe0104000        0x4 core/sys.o
@@ -189,56 +203,61 @@ Linker script and memory map
  .data          0xe0104008        0x0 task/timer.o
  .data          0xe0104008        0x0 task/idt.o
  .data          0xe0104008        0x4 task/task.o
-                0xe0104008                nextpid
- .data          0xe010400c       0x14 task/syscall.o
+ .data          0xe010400c       0x18 task/syscall.o
                 0xe010400c                syscalls
- .data          0xe0104020        0x0 lib/stdlib.o
- .data          0xe0104020        0x0 lib/bitset.o
- .data          0xe0104020        0x0 mem/mem.o
- .data          0xe0104020        0x0 mem/paging.o
- .data          0xe0104020        0x0 mem/gdt.o
- .data          0xe0104020        0x0 mem/heap.o
+ .data          0xe0104024        0x0 lib/stdlib.o
+ .data          0xe0104024        0x0 lib/bitset.o
+ .data          0xe0104024        0x0 mem/mem.o
+ .data          0xe0104024        0x0 mem/paging.o
+ .data          0xe0104024        0x0 mem/gdt.o
+ .data          0xe0104024        0x0 mem/heap.o
+ .data          0xe0104024        0x0 mem/seg.o
 
-.igot.plt       0xe0104020        0x0 load address 0x00104020
+.igot.plt       0xe0104024        0x0 load address 0x00104024
  .igot.plt      0x00000000        0x0 core/loader_.o
 
-.bss            0xe0104020     0x4950 load address 0x00104020
-                0xe0104020                sbss = .
+.bss            0xe0104040    0x10970 load address 0x00104040
+                0xe0104040                sbss = .
  *(COMMON)
- COMMON         0xe0104020      0x820 task/idt.o
-                0xe0104020                idt_ptr
-                0xe0104040                idt_entries
- COMMON         0xe0104840        0x4 mem/mem.o
-                0xe0104840                mem_placementAddr
- COMMON         0xe0104844        0x8 mem/paging.o
-                0xe0104844                current_pagedir
-                0xe0104848                kernel_pagedir
+ COMMON         0xe0104040      0x820 task/idt.o
+                0xe0104040                idt_ptr
+                0xe0104060                idt_entries
+ COMMON         0xe0104860    0x10008 task/task.o
+                0xe0104860                tasking_tmpStack
+                0xe0114860                kernel_process
+                0xe0114864                idle_thread
+ COMMON         0xe0114868        0x4 mem/mem.o
+                0xe0114868                mem_placementAddr
+ COMMON         0xe011486c        0x8 mem/paging.o
+                0xe011486c                current_pagedir
+                0xe0114870                kernel_pagedir
  *(.bss)
- .bss           0xe010484c     0x4000 core/loader_.o
- .bss           0xe010884c        0x0 core/kmain.o
- .bss           0xe010884c        0x0 core/sys.o
- .bss           0xe010884c        0x8 core/monitor.o
- .bss           0xe0108854        0xc task/timer.o
- .bss           0xe0108860       0x40 task/idt.o
- .bss           0xe01088a0        0xc task/task.o
-                0xe01088a0                processes
-                0xe01088a4                threads
-                0xe01088a8                current_thread
- .bss           0xe01088ac        0x0 task/syscall.o
- .bss           0xe01088ac        0x0 lib/stdlib.o
- .bss           0xe01088ac        0x0 lib/bitset.o
- *fill*         0xe01088ac       0x14 00
- .bss           0xe01088c0       0x60 mem/mem.o
-                0xe01088c0                freepagecount
- .bss           0xe0108920        0x8 mem/paging.o
- *fill*         0xe0108928       0x18 00
- .bss           0xe0108940       0x2e mem/gdt.o
- *fill*         0xe010896e        0x2 00
- .bss           0xe0108970        0x0 mem/heap.o
-                0xe0108970                ebss = .
-                0xe0108970                end = .
-                0xe0108970                _end = .
-                0xe0108970                __end = .
+ .bss           0xe0114874        0x0 core/kmain.o
+ .bss           0xe0114874        0x0 core/sys.o
+ .bss           0xe0114874        0x8 core/monitor.o
+ .bss           0xe011487c        0xc task/timer.o
+ *fill*         0xe0114888       0x18 00
+ .bss           0xe01148a0       0x40 task/idt.o
+ .bss           0xe01148e0        0xc task/task.o
+                0xe01148e0                processes
+                0xe01148e4                threads
+                0xe01148e8                current_thread
+ .bss           0xe01148ec        0x0 task/syscall.o
+ .bss           0xe01148ec        0x0 lib/stdlib.o
+ .bss           0xe01148ec        0x0 lib/bitset.o
+ *fill*         0xe01148ec       0x14 00
+ .bss           0xe0114900       0x60 mem/mem.o
+                0xe0114900                freepagecount
+ .bss           0xe0114960        0x8 mem/paging.o
+ *fill*         0xe0114968       0x18 00
+ .bss           0xe0114980       0x2e mem/gdt.o
+ *fill*         0xe01149ae        0x2 00
+ .bss           0xe01149b0        0x0 mem/heap.o
+ .bss           0xe01149b0        0x0 mem/seg.o
+                0xe01149b0                ebss = .
+                0xe01149b0                end = .
+                0xe01149b0                _end = .
+                0xe01149b0                __end = .
 LOAD core/loader_.o
 LOAD core/kmain.o
 LOAD core/sys.o
@@ -255,6 +274,7 @@ LOAD mem/mem.o
 LOAD mem/paging.o
 LOAD mem/gdt.o
 LOAD mem/heap.o
+LOAD mem/seg.o
 OUTPUT(stem.elf elf32-i386)
 
 .comment        0x00000000       0x11
@@ -272,6 +292,7 @@ OUTPUT(stem.elf elf32-i386)
  .comment       0x00000000       0x12 mem/paging.o
  .comment       0x00000000       0x12 mem/gdt.o
  .comment       0x00000000       0x12 mem/heap.o
+ .comment       0x00000000       0x12 mem/seg.o
 
 .note.GNU-stack
                 0x00000000        0x0
@@ -301,3 +322,5 @@ OUTPUT(stem.elf elf32-i386)
                 0x00000000        0x0 mem/gdt.o
  .note.GNU-stack
                 0x00000000        0x0 mem/heap.o
+ .note.GNU-stack
+                0x00000000        0x0 mem/seg.o

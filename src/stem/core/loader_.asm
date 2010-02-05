@@ -1,8 +1,7 @@
 [GLOBAL loader]           ; making entry point visible to linker
 [EXTERN kmain]            ; kmain is defined in kmain.c
+[EXTERN tasking_tmpStack] ; a temporary 4k stack used by tasking, and used when setting up kernel stuff
 
-STACKSIZE equ 0x4000                  ; that's 16k.
- 
 ; setting up the Multiboot header - see GRUB docs for details
 MODULEALIGN equ  1<<0                   ; align loaded modules on page boundaries
 MEMINFO     equ  1<<1                   ; provide memory map
@@ -32,7 +31,7 @@ loader:		;here, we load our false GDT, used for having the kernel in higher half
 section .text
 higherhalf:		; now we're running in higher half
 
-   mov esp, stack+STACKSIZE           ; set up the stack
+   mov esp, tasking_tmpStack+0x4000           ; set up the stack
    push eax                           ; pass Multiboot magic number
    add ebx, 0xE0000000				  ; update the MB info structure so that it is in the new seg
    push ebx                           ; pass Multiboot info structure
@@ -56,8 +55,3 @@ gdt:
    db 0xFF, 0xFF, 0, 0, 0, 10010010b, 11001111b, 0x20	; kernel data segment
 
 gdt_end:
- 
-[section .bss]
-align 32
-stack:
-   resb STACKSIZE                     ; reserve 16k stack on a quadword boundary

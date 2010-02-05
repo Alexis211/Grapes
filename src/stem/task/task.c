@@ -12,21 +12,24 @@ extern void task_idle(void*);
 
 static uint32_t thread_runnable(struct thread *th);
 
-uint32_t nextpid = 1;
+static uint32_t nextpid = 1;
 
-struct process *processes = 0;
-struct thread *threads = 0, *current_thread = 0;
+struct process *processes = 0, *kernel_process;
+struct thread *threads = 0, *current_thread = 0, *idle_thread;
+
+uint32_t tasking_tmpStack[0x4000];
 
 void tasking_init(thread_entry whereToGo, void *data) {
 	cli();
-	struct process *pr = kmalloc(sizeof(struct process));	//This process must be hidden to users
-	pr->pid = pr->uid = 0;
-	pr->parent = pr;
-	pr->pagedir = kernel_pagedir;
-	pr->next = 0;
+	kernel_process = kmalloc(sizeof(struct process));	//This process must be hidden to users
+	kernel_process->pid = kernel_process->uid = kernel_process->threads = 0;
+	kernel_process->privilege = PL_KERNEL;
+	kernel_process->parent = kernel_process;
+	kernel_process->pagedir = kernel_pagedir;
+	kernel_process->next = 0;
 	current_thread = 0;
-	thread_new(pr, task_idle, 0);
-	thread_new(pr, whereToGo, data);
+	thread_new(kernel_process, task_idle, 0);
+	thread_new(kernel_process, whereToGo, data);
 	sti();
 	monitor_write("Tasking starting\n");
 	tasking_switch();
@@ -75,6 +78,15 @@ void tasking_switch() {
 		: : "r"(current_thread->ebp), "r"(current_thread->esp), "r"(current_thread->eip));
 }
 
+void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint32_t tablephysical) {
+	struct process* it = processes;
+	while (it != 0) {
+		it->pagedir->tables[idx] = table;
+		it->pagedir->tablesPhysical[idx] = tablephysical;
+		it = it->next;
+	}
+}
+
 uint32_t tasking_handleException(struct registers *regs) {
 	if (threads == 0) return 0;	//No tasking yet
 	return 0;
@@ -87,15 +99,16 @@ static uint32_t thread_runnable(struct thread *t) {
 }
 
 static void thread_run(struct thread *thread, thread_entry entry_point, void *data) {
-	pagedir_switch(thread->process->pagedir);
+	pagedir_switch(thread->process->pagedir);	//TODO : take into account privilege level
 	asm volatile("sti");
 	entry_point(data);
 	asm volatile("int $64");
 }
 
-void thread_new(struct process *proc, thread_entry entry_point, void *data) {
+struct thread *thread_new(struct process *proc, thread_entry entry_point, void *data) {
 	struct thread *t = kmalloc(sizeof(struct thread));
 	t->process = proc;
+	proc->threads++;
 	t->kernelStack_addr = kmalloc(KSTACKSIZE);
 	t->kernelStack_size = KSTACKSIZE;
 
@@ -119,5 +132,18 @@ void thread_new(struct process *proc, thread_entry entry_point, void *data) {
 		while (i->next != 0) i = i->next;
 		i->next = t;
 	}
+	return t;
 }
 
+struct process *process_new(struct process* parent, uint32_t uid, uint32_t privilege) {
+	struct process* p = kmalloc(sizeof(struct process));
+	p->pid = (nextpid++);
+	p->uid = uid;
+	p->threads = 0;
+	p->privilege = privilege;
+	p->parent = parent;
+	p->pagedir = pagedir_new();
+	p->next = processes;
+	processes = p;
+	return p;
+}

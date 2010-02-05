@@ -18,10 +18,12 @@ struct page_table {
 	struct page pages[1024];
 };
 
+struct segment_map;
 struct page_directory {
 	struct page_table *tables[1024];	//Virtual addresses of page tables
 	uint32_t *tablesPhysical;			//Pointer to the virtual address of the page directory (contain phys addr of pt)
 	uint32_t physicalAddr;				//Physical address of info above
+	struct segment_map *mappedSegs;
 };
 
 extern struct page_directory *kernel_pagedir;
@@ -32,11 +34,12 @@ void frame_free(uint32_t id);
 void paging_init(size_t totalRam);
 void paging_cleanup();
 void pagedir_switch(struct page_directory *pd);
+struct page_directory *pagedir_new();	//Creates a brand new empty page directory for a process, with kernel pages
 struct page *pagedir_getPage(struct page_directory *pd, uint32_t address, int make);
 void page_map(struct page *page, uint32_t frame, uint32_t user, uint32_t rw);
 void page_unmap(struct page *page);
 void page_unmapFree(struct page *page);
 
-uint32_t paging_fault(struct registers *regs);	//returns a boolean
+uint32_t paging_fault(struct registers *regs);	//returns a boolean : 1 if unhandled, 0 if ok
 
 #endif
