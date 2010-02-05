@@ -8,7 +8,7 @@ struct segment_map *seg_map(struct segment* seg, struct page_directory *pagedir)
 	sm->seg = seg;
 	sm->pagedir = pagedir;
 	sm->next = pagedir->mappedSegs;
-	pagedir->mappedSegs = sm->next;
+	pagedir->mappedSegs = sm;
 	return sm;
 }
 

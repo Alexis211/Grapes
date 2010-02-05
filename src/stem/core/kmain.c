@@ -57,7 +57,7 @@ void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 		}
 	}
 
-	monitor_write("Passing conroll to loaded modules...\n");
+	monitor_write("Passing controll to loaded modules...\n");
 	sti();
 	tasking_switch();
 }

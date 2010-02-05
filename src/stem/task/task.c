@@ -85,6 +85,7 @@ void tasking_switch() {
 }
 
 void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint32_t tablephysical) {
+	if (idx < 896) return;
 	struct process* it = processes;
 	while (it != 0) {
 		it->pagedir->tables[idx] = table;
@@ -94,16 +95,17 @@ void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint3
 }
 
 uint32_t tasking_handleException(struct registers *regs) {
-	if (threads == 0) return 0;	//No tasking yet
-	monitor_write("\nUnhandled exception : ");
+	if (current_thread == 0) return 0;	//No tasking yet
+	monitor_write("\n(task.c:99) Unhandled exception : ");
 	char *exception_messages[] = {"Division By Zero","Debug","Non Maskable Interrupt","Breakpoint",
     "Into Detected Overflow","Out of Bounds","Invalid Opcode","No Coprocessor", "Double Fault",
     "Coprocessor Segment Overrun","Bad TSS","Segment Not Present","Stack Fault","General Protection Fault",
     "Page Fault","Unknown Interrupt","Coprocessor Fault","Alignment Check","Machine Check"};
 	monitor_write(exception_messages[regs->int_no]);
-	monitor_write("\nThread exiting.\n");
+	monitor_write(" at "); monitor_writeHex(regs->eip);
+	monitor_write(" >>> Thread exiting.\n");
 	thread_exit_stackJmp(EX_TH_EXCEPTION);
-	return 0;
+	PANIC("This should never have happened. Please report this.");
 }
 
 void thread_sleep(uint32_t msecs) {
@@ -225,7 +227,7 @@ static void thread_delete(struct thread *th) {
 
 static void process_delete(struct process *pr) {
 	struct thread *it;
-	while (threads->process == pr) thread_delete(threads);
+	while (threads != 0 && threads->process == pr) thread_delete(threads);
 	it = threads;
 	while (it != 0) {
 		while (it->next->process == pr) thread_delete(it->next);

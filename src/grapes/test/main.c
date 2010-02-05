@@ -4,5 +4,5 @@ void printk(char *s) {
 
 void start() {
 	printk("Hi world !");
-	asm volatile("int $64" : : "a"(0));
+	asm volatile("int $64" : : "a"(3), "b"(0));
 }

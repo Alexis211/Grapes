@@ -54,7 +54,7 @@ void paging_init(size_t totalRam) {
 void paging_cleanup() {
 	uint32_t i;
 	for (i = 0; i < (mem_placementAddr - 0xE0000000) / 0x100000; i++) {
-		kernel_pagedir->tablesPhysical[i] = 9;
+		kernel_pagedir->tablesPhysical[i] = 0;
 		kernel_pagedir->tables[i] = 0;
 	}
 	monitor_write("Pages cleaned up\n");
@@ -80,7 +80,7 @@ struct page_directory *pagedir_new() {
 		pd->tables[i] = 0; pd->tablesPhysical[i] = 0;
 	}
 
-	for (i = 768; i < 1024; i++) {
+	for (i = 896; i < 1024; i++) {
 		pd->tables[i] = kernel_pagedir->tables[i];
 		pd->tablesPhysical[i] = kernel_pagedir->tablesPhysical[i];
 	}
@@ -93,7 +93,7 @@ void pagedir_delete(struct page_directory *pd) {
 	//Unmap segments
 	while (pd->mappedSegs != 0) seg_unmap(pd->mappedSegs);
 	//Cleanup page tables
-	for (i = 0; i < 768; i++) {
+	for (i = 0; i < 896; i++) {
 		kfree_page(pd->tables[i]);
 	}
 	kfree_page(pd->tablesPhysical);
@@ -107,16 +107,16 @@ uint32_t paging_fault(struct registers *regs) {
 
 	seg = current_pagedir->mappedSegs;
 	while (seg) {
-		if (seg->start >= addr && seg->start + seg->len < addr) break;
+		if (seg->start <= addr && seg->start + seg->len > addr) break;
 		seg = seg->next;
 	}
 
 	if (seg != 0) {
-		if (seg->seg->handle_fault(seg, addr, (regs->err_code & 0x2)) != 0) seg = 0;
+		if (seg->seg->handle_fault(seg, addr, (regs->err_code & 0x2) && (regs->eip < 0xE0000000)) != 0) seg = 0;
 	}
 
 	if (seg == 0) {
-		monitor_write("PageFault ");
+		monitor_write("(paging.c:119) Unhandled Page Fault ");
 		if (regs->err_code & 0x1) monitor_write("present ");
 		if (regs->err_code & 0x2) monitor_write("write ");
 		if (regs->err_code & 0x4) monitor_write("user ");
@@ -136,7 +136,7 @@ struct page *pagedir_getPage(struct page_directory *pd, uint32_t address, int ma
 		return &pd->tables[table_idx]->pages[address %  1024];
 	} else if (make) {
 		pd->tables[table_idx] = kmalloc_page(pd->tablesPhysical + table_idx);
-		if (table_idx >= 768)
+		if (table_idx >= 896)
 			tasking_updateKernelPagetable(table_idx, pd->tables[table_idx], pd->tablesPhysical[table_idx]);
 		memset((uint8_t*)pd->tables[table_idx], 0, 0x1000);
 		pd->tablesPhysical[table_idx] |= 0x07;

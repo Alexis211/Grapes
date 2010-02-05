@@ -1,7 +1,7 @@
 #include "stdlib.h"
 
 void *memcpy(void *vd, const void *vs, int count) {
-	uint8_t *dest = vd, *src = vs;
+	uint8_t *dest = (uint8_t*)vd, *src = (uint8_t*)vs;
 	uint32_t f = count % 4, n = count / 4, i;
 	const uint32_t* s = (uint32_t*)src;
 	uint32_t* d = (uint32_t*)dest;

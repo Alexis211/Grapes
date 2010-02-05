@@ -30,5 +30,6 @@ uint32_t bitset_firstFree(struct bitset* t) {
 			}
 		}
 	}
+	return (uint32_t) - 1;
 }
 
