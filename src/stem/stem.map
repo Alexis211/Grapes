@@ -26,7 +26,7 @@ Linker script and memory map
                 0x00100000                loader
                 0xe010003a                . = (. + 0xe0000000)
 
-.text           0xe0100040     0x3395 load address 0x00100040
+.text           0xe0100040     0x355a load address 0x00100040
  *(.text)
  .text          0xe0100040       0x25 core/loader_.o
  *fill*         0xe0100065        0x3 00
@@ -178,8 +178,12 @@ Linker script and memory map
                 0xe01032e8                simpleseg_unmap
                 0xe010333b                simpleseg_handleFault
                 0xe01033d0                simpleseg_delete
+ *fill*         0xe01033d5        0x3 00
+ .text          0xe01033d8      0x1c2 linker/elf.o
+                0xe01033d8                elf_check
+                0xe010341d                elf_load
 
-.iplt           0xe01033d8        0x0 load address 0x001033d5
+.iplt           0xe010359c        0x0 load address 0x0010359a
  .iplt          0x00000000        0x0 core/loader_.o
 
 .rodata         0xe0104000      0x395 load address 0x00104000
@@ -216,6 +220,7 @@ Linker script and memory map
  .data          0xe0105024        0x0 mem/gdt.o
  .data          0xe0105024        0x0 mem/heap.o
  .data          0xe0105024        0x0 mem/seg.o
+ .data          0xe0105024        0x0 linker/elf.o
 
 .igot.plt       0xe0105024        0x0 load address 0x00105024
  .igot.plt      0x00000000        0x0 core/loader_.o
@@ -258,6 +263,7 @@ Linker script and memory map
  *fill*         0xe01159ae        0x2 00
  .bss           0xe01159b0        0x0 mem/heap.o
  .bss           0xe01159b0        0x0 mem/seg.o
+ .bss           0xe01159b0        0x0 linker/elf.o
                 0xe01159b0                ebss = .
                 0xe01159b0                end = .
                 0xe01159b0                _end = .
@@ -279,6 +285,7 @@ LOAD mem/paging.o
 LOAD mem/gdt.o
 LOAD mem/heap.o
 LOAD mem/seg.o
+LOAD linker/elf.o
 OUTPUT(stem.elf elf32-i386)
 
 .comment        0x00000000       0x11
@@ -297,6 +304,7 @@ OUTPUT(stem.elf elf32-i386)
  .comment       0x00000000       0x12 mem/gdt.o
  .comment       0x00000000       0x12 mem/heap.o
  .comment       0x00000000       0x12 mem/seg.o
+ .comment       0x00000000       0x12 linker/elf.o
 
 .note.GNU-stack
                 0x00000000        0x0
@@ -328,3 +336,5 @@ OUTPUT(stem.elf elf32-i386)
                 0x00000000        0x0 mem/heap.o
  .note.GNU-stack
                 0x00000000        0x0 mem/seg.o
+ .note.GNU-stack
+                0x00000000        0x0 linker/elf.o
