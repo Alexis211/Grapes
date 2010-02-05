@@ -10,13 +10,21 @@
 #include <mem/mem.h>
 
 void kmain_othertask(void *data) {
-	while(1) monitor_write("2task ");
+	uint32_t i;
+	for(i = 0; i < 100; i++) {
+		monitor_write("2task ");
+		thread_sleep(0);
+	}
+	process_exit(0);
 }
 
 void kmain_stage2(void *data) {
 	sti();
 	thread_new(current_thread->process, kmain_othertask, 0);
-	while (1) monitor_write("TASK1 ");
+	while (1) {
+		monitor_write("TASK1 ");
+		thread_sleep(0);
+	}
 }
 
 void kmain(struct multiboot_info_t* mbd, int32_t magic) {

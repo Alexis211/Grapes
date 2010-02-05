@@ -36,6 +36,6 @@ void cli() {
 }
 
 void sti() {
-	if_locks--;
+	if (if_locks > 0) if_locks--;
 	if (if_locks == 0) asm volatile("sti");
 }

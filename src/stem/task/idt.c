@@ -95,7 +95,11 @@ void idt_irqHandler(struct registers regs) {
 }
 
 void idt_syscallHandler(struct registers regs) {
-	syscalls[regs.eax](&regs);
+	if (syscalls[regs.eax] != 0) {
+		syscalls[regs.eax](&regs);
+	} else {
+		PANIC("unhandled syscall");
+	}
 }
 
 static void idt_setGate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags) {

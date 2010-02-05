@@ -6,13 +6,15 @@
 #define CALL2(name, scname) static void scname(struct registers* r) { \
 	r->eax = name(r->ebx, r->ecx); }
 
+CALL0(thread_exit, thread_exit_sc);
 CALL0(tasking_switch, schedule_sc);
+CALL1(process_exit, process_exit_sc);
 CALL1(monitor_write, printk_sc);
 
 int_callback syscalls[] = {
-	0,			//Syscall 0 will be thread_exit
+	thread_exit_sc,
 	schedule_sc,
 	0,			//Syscall 2 will be thread_sleep
-	0,			//Syscall 3 will be process_exit
+	process_exit_sc,
 	printk_sc,
 	0 };

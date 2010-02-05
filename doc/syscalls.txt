@@ -4,8 +4,10 @@ are in ebx, ecx, edx, esi, edi.
 Syscall list :
 
 id=eax	Name			Parameters				Description
-  0		thread_exit		ebx: return value (int)	Signal kernel that current thread has finished
+  0		thread_exit		none					Signal kernel that current thread has finished
   1		schedule		none					Switch to next thread (might be the current one)
   2		thread_sleep	ebx: time (int) msecs	Tell kernel to put current thread to sleep
   3		process_exit	ebx: return value (int)	Tell kernel to end current process, cleaning up everything
   4		printk			ebx: addr of a string	Print a message to screen
+
+If a processes wishes to exit with an error code, it HAS to use process_exit. thread_exit will do nothing.

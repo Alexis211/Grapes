@@ -5,14 +5,6 @@
 #include <mem/paging.h>
 #include "idt.h"
 
-struct process {
-	uint32_t pid, uid, privilege, threads;
-	struct process *parent;
-	struct page_directory *pagedir;
-
-	struct process *next;	//Forms a linked list
-};
-
 #define TS_RUNNING 0	
 #define TS_SLEEPING 1	//Sleeping for a defined amount of time
 #define TS_WAIKWAIT 2	//Waiting to be waked up by something precise (thread currently blocked)
@@ -22,7 +14,19 @@ struct process {
 #define PL_DRIVER 1
 #define PL_KERNEL 0
 
+#define EX_TH_NORMAL	0x10000		//ERROR code : just one thread exits, because it has to
+#define EX_TH_EXCEPTION 0x10001		//ERROR code : just one thread exits, because of an unhandled exception
+#define EX_PR_EXCEPTION 0x10002		//ERROR code : all process finishes, because of an unhandled exception
+
 typedef void (*thread_entry)(void*);
+
+struct process {
+	uint32_t pid, uid, privilege, threads;
+	struct process *parent;
+	struct page_directory *pagedir;
+
+	struct process *next;	//Forms a linked list
+};
 
 struct thread {
 	struct process *process;
@@ -42,6 +46,9 @@ void tasking_switch();
 void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint32_t tablePhysical);
 uint32_t tasking_handleException(struct registers *regs);
 
+void thread_sleep(uint32_t msecs);
+void thread_exit();
+void process_exit(uint32_t retval);
 struct thread * thread_new(struct process *proc, thread_entry entry_point, void *data);
 struct process* process_new(struct process *parent, uint32_t uid, uint32_t privilege);
 

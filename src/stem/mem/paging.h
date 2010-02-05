@@ -35,6 +35,7 @@ void paging_init(size_t totalRam);
 void paging_cleanup();
 void pagedir_switch(struct page_directory *pd);
 struct page_directory *pagedir_new();	//Creates a brand new empty page directory for a process, with kernel pages
+void pagedir_delete(struct page_directory *pagedir);
 struct page *pagedir_getPage(struct page_directory *pd, uint32_t address, int make);
 void page_map(struct page *page, uint32_t frame, uint32_t user, uint32_t rw);
 void page_unmap(struct page *page);

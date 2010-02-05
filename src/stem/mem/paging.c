@@ -30,6 +30,7 @@ void paging_init(size_t totalRam) {
 	frames.bits = kmalloc(INDEX_FROM_BIT(frames.size));
 
 	kernel_pagedir = kmalloc(sizeof(struct page_directory));
+	kernel_pagedir->mappedSegs = 0;
 	kernel_pagedir->tablesPhysical = kmalloc_page(&kernel_pagedir->physicalAddr);
 	for (i = 0; i < 1024; i++) {
 		kernel_pagedir->tables[i] = 0;
@@ -73,6 +74,7 @@ struct page_directory *pagedir_new() {
 
 	struct page_directory *pd = kmalloc(sizeof(struct page_directory));
 	pd->tablesPhysical = kmalloc_page(&pd->physicalAddr);
+	pd->mappedSegs = 0;
 
 	for (i = 768; i < 1024; i++) {
 		pd->tables[i] = kernel_pagedir->tables[i];
@@ -80,6 +82,18 @@ struct page_directory *pagedir_new() {
 	}
 
 	return pd;
+}
+
+void pagedir_delete(struct page_directory *pd) {
+	uint32_t i;
+	//Unmap segments
+	while (pd->mappedSegs != 0) seg_unmap(pd->mappedSegs);
+	//Cleanup page tables
+	for (i = 0; i < 768; i++) {
+		kfree_page(pd->tables[i]);
+	}
+	kfree_page(pd->tablesPhysical);
+	kfree(pd);
 }
 
 uint32_t paging_fault(struct registers *regs) {

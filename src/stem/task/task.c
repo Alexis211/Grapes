@@ -6,6 +6,12 @@
 
 #define KSTACKSIZE 0x8000
 
+//Static routines for handling threads exiting and all cleanup
+static void thread_exit_stackJmp(uint32_t reason);
+static void thread_exit2(uint32_t reason);
+static void thread_delete(struct thread *th);
+static void process_delete(struct process *pr);
+
 //From task_.asm
 extern uint32_t read_eip();
 extern void task_idle(void*);
@@ -28,15 +34,16 @@ void tasking_init(thread_entry whereToGo, void *data) {
 	kernel_process->pagedir = kernel_pagedir;
 	kernel_process->next = 0;
 	current_thread = 0;
-	thread_new(kernel_process, task_idle, 0);
+	idle_thread = thread_new(kernel_process, task_idle, 0);
+	threads = 0;	//Do not include idle thread in threads
 	thread_new(kernel_process, whereToGo, data);
 	sti();
 	monitor_write("Tasking starting\n");
 	tasking_switch();
 }
 
-static struct thread *thread_next() {		//NOT OPTIMAL : will allocate time slices to idle thread even if busy
-	if (current_thread == 0) current_thread = threads;
+static struct thread *thread_next() {
+	if (current_thread == 0 || current_thread == idle_thread) current_thread = threads;
 	struct thread *ret = current_thread;
 	while (1) {
 		ret = ret->next;
@@ -44,12 +51,13 @@ static struct thread *thread_next() {		//NOT OPTIMAL : will allocate time slices
 		if (thread_runnable(ret)) {
 		   return ret;
 		}
+		if (ret == current_thread) return idle_thread;
 	}
 }
 
 void tasking_switch() {
-	if (threads == 0) return;	//no tasking yet
-	cli();
+	if (threads == 0) PANIC("No more threads to run !");
+	asm volatile("cli");
 
 	uint32_t esp, ebp, eip;
 
@@ -89,7 +97,63 @@ void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint3
 
 uint32_t tasking_handleException(struct registers *regs) {
 	if (threads == 0) return 0;	//No tasking yet
+	monitor_write("\nUnhandled exception : ");
+	char *exception_messages[] = {"Division By Zero","Debug","Non Maskable Interrupt","Breakpoint",
+    "Into Detected Overflow","Out of Bounds","Invalid Opcode","No Coprocessor", "Double Fault",
+    "Coprocessor Segment Overrun","Bad TSS","Segment Not Present","Stack Fault","General Protection Fault",
+    "Page Fault","Unknown Interrupt","Coprocessor Fault","Alignment Check","Machine Check"};
+	monitor_write(exception_messages[regs->int_no]);
+	monitor_write("\nThread exiting.\n");
+	thread_exit_stackJmp(EX_TH_EXCEPTION);
 	return 0;
+}
+
+void thread_sleep(uint32_t msecs) {
+	if (current_thread == 0) return;
+	current_thread->state = TS_SLEEPING;
+	current_thread->timeWait = timer_time() + msecs;
+	asm volatile("int $64" : : "a"(1));
+}
+
+void thread_exit2(uint32_t reason) {		//See EX_TH_* defines in task.h
+	/*
+	 * if reason == EX_TH_NORMAL, it is just one thread exiting because it has to
+	 * if reason == EX_TH_EXCEPTION, it is just one thread exiting because of an exception
+	 * if reason is none of the two cases above, it is the whole process exiting (with error code = reason)
+	 */
+	struct thread *th = current_thread;
+	struct process *pr = th->process;
+	if ((reason == EX_TH_NORMAL || reason == EX_TH_EXCEPTION) && pr->threads > 1) {
+		thread_delete(th);
+	} else {
+		process_delete(pr);
+	}
+	sti();
+	tasking_switch();
+}
+
+void thread_exit_stackJmp(uint32_t reason) {
+	uint32_t *stack;
+	cli();
+	stack = tasking_tmpStack + 0x4000;
+	stack--; *stack = reason;
+	stack--; *stack = 0;
+	asm volatile("			\
+			mov %0, %%esp;	\
+			mov %1, %%ebp;	\
+			mov %2, %%ecx;	\
+			mov %3, %%cr3;	\
+			jmp *%%ecx;" : :
+			"r"(stack), "r"(stack), "r"(thread_exit2), "r"(kernel_pagedir->physicalAddr));
+}
+
+void thread_exit() {
+	thread_exit_stackJmp(EX_TH_NORMAL);
+}
+
+void process_exit(uint32_t retval) {
+	if (retval == EX_TH_NORMAL || retval == EX_TH_EXCEPTION) retval = EX_PR_EXCEPTION;
+	thread_exit_stackJmp(retval);
 }
 
 static uint32_t thread_runnable(struct thread *t) {
@@ -102,7 +166,7 @@ static void thread_run(struct thread *thread, thread_entry entry_point, void *da
 	pagedir_switch(thread->process->pagedir);	//TODO : take into account privilege level
 	asm volatile("sti");
 	entry_point(data);
-	asm volatile("int $64");
+	thread_exit(0);
 }
 
 struct thread *thread_new(struct process *proc, thread_entry entry_point, void *data) {
@@ -146,4 +210,36 @@ struct process *process_new(struct process* parent, uint32_t uid, uint32_t privi
 	p->next = processes;
 	processes = p;
 	return p;
+}
+
+static void thread_delete(struct thread *th) {
+	kfree(th->kernelStack_addr);
+	th->process->threads--;
+	if (threads == th) {
+		threads = th->next;
+	} else {
+		struct thread *it = threads;
+		while (it->next != th && it->next != 0) it = it->next;
+		if (it->next == th) it->next = th->next;
+	}
+	kfree(th);
+}
+
+static void process_delete(struct process *pr) {
+	struct thread *it;
+	while (threads->process == pr) thread_delete(threads);
+	it = threads;
+	while (it != 0) {
+		while (it->next->process == pr) thread_delete(it->next);
+		it = it->next;
+	}
+	pagedir_delete(pr->pagedir);
+	if (processes == pr) {
+		processes = pr->next;
+	} else {
+		struct process *it = processes;
+		while (it != 0 && it->next != pr) it = it->next;
+		if (it != 0 && it->next == pr) it->next = pr->next;
+	}
+	kfree(pr);
 }
