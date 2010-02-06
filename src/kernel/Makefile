@@ -15,15 +15,16 @@ OBJECTS = core/loader_.o core/kmain.o core/sys.o \
 		  lib/stdlib.o lib/bitset.o \
 		  mem/mem.o mem/paging.o mem/gdt.o mem/heap.o mem/seg.o \
 		  linker/elf.o
-OUT = stem.elf
+OUT = kernel.elf
 
 all: $(OBJECTS)
 	echo "* Linking $(OUT)..."
-	$(LD) $(LDFLAGS) $(OBJECTS) -o $(OUT) -Map stem.map
+	$(LD) $(LDFLAGS) $(OBJECTS) -o $(OUT) -Map kernel.map
 
 clean:
 	rm $(OBJECTS) || exit 0
 	rm *.o */*.o || exit 0
+	rm *.map || exit 0
 
 mrproper: clean
 	rm $(OUT) || exit 0

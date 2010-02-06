@@ -31,7 +31,7 @@ void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 		PANIC("wrong multiboot magic number.");
 	}
 
-	monitor_write("Grapes::Stem is booting\n");
+	monitor_write("Grapes kernel booting ...\n");
 
 	idt_init();
 
@@ -57,7 +57,7 @@ void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 		}
 	}
 
-	monitor_write("Passing controll to loaded modules...\n");
+	monitor_write("Passing control to loaded modules...\n");
 	sti();
 	tasking_switch();
 }

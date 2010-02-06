@@ -1,13 +1,13 @@
 .PHONY: clean, mrproper
 
 CC = gcc
-CFLAGS = -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -Wall -Wextra
+CFLAGS = -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -Wall -Wextra -I ../../library
 
 LD = ld
-LDFLAGS = -T ../link.ld
+LDFLAGS = -T ../../library/link.ld -L ../../library
 
 Objects = main.o
-Outfile = test
+Outfile = test.elf
 
 all: $(Outfile)
 	echo "* Done with $(Outfile)"
@@ -23,8 +23,10 @@ $(Outfile): $(Objects)
 
 clean:
 	echo "* Removing objects..."
-	rm $(Objects)
+	rm *.o || exit 0
+	rm $(Objects) || exit 0
 
 mrproper: clean
-	rm $(Outfile)
+	rm *.elf || exit 0
+	rm $(Outfile) || exit 0
 

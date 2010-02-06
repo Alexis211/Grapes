@@ -1,8 +1,7 @@
 .PHONY: clean, mrproper, Init.rfs, floppy, commit
 
-Projects = stem grapes/test
+Projects = kernel library modules/test
 
-Kernel = src/stem/stem.elf
 Floppy = Grapes.fl.img
 
 all:
