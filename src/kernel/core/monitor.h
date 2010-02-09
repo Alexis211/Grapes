@@ -9,7 +9,7 @@ void monitor_write(char *s);
 void monitor_writeHex(uint32_t v);
 void monitor_writeDec(uint32_t v);
 
-#define NL monitor_put("\n");
+#define NL monitor_put('\n');
 
 #endif
 

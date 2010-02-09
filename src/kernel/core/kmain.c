@@ -49,7 +49,7 @@ void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 		if (elf_check((uint8_t*)mods[i].mod_start)) {
 			monitor_write(" : Invalid ELF file\n");
 		} else {
-			if (elf_exec((uint8_t*)mods[i].mod_start, PL_SERVICE) == 0) {
+			if (elf_exec((uint8_t*)mods[i].mod_start, PL_DRIVER) == 0) {
 				monitor_write(" : Error loading\n");
 			} else {
 				monitor_write(" : OK\n");

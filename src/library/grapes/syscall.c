@@ -25,3 +25,7 @@ void process_exit(int retval) {
 void printk(char* str) {
 	call(4, (unsigned)str, 0, 0, 0, 0);
 }
+
+void thread_new(void (*entry)(void*), void *data) {
+	call(5, (unsigned)entry, (unsigned)data, 0, 0, 0);
+}

@@ -107,8 +107,13 @@ uint32_t tasking_handleException(struct registers *regs) {
     "Page Fault","Unknown Interrupt","Coprocessor Fault","Alignment Check","Machine Check"};
 	monitor_write(exception_messages[regs->int_no]);
 	monitor_write(" at "); monitor_writeHex(regs->eip);
-	monitor_write("\n>>> Thread exiting.\n");
-	thread_exit_stackJmp(EX_TH_EXCEPTION);
+	if (regs->int_no == 14) {
+		monitor_write("\n>>> Process exiting.\n");
+		thread_exit_stackJmp(EX_PR_EXCEPTION);
+	} else {
+		monitor_write("\n>>> Thread exiting.\n");
+		thread_exit_stackJmp(EX_TH_EXCEPTION);
+	}
 	PANIC("This should never have happened. Please report this.");
 }
 
