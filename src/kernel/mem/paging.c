@@ -116,7 +116,7 @@ uint32_t paging_fault(struct registers *regs) {
 	}
 
 	if (seg == 0) {
-		monitor_write("(paging.c:119) Unhandled Page Fault ");
+		WHERE; monitor_write("Unhandled Page Fault ");
 		if (regs->err_code & 0x1) monitor_write("present ");
 		if (regs->err_code & 0x2) monitor_write("write ");
 		if (regs->err_code & 0x4) monitor_write("user ");

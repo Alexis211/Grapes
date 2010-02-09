@@ -108,7 +108,7 @@ static void idt_setGate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
 
 	idt_entries[num].sel = sel;
 	idt_entries[num].always0 = 0;
-	idt_entries[num].flags = flags;
+	idt_entries[num].flags = flags | 0x60;
 }
 
 void idt_init() {

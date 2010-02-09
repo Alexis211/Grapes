@@ -23,7 +23,8 @@ uint16_t inw(uint16_t port) {
 
 void panic(char* message, char* file, int line) {
 	monitor_write("\n>> PANIC: >>");
-	monitor_write(message); monitor_write("<< in file "); monitor_write(file);
+	monitor_write(message); monitor_write("<< at "); monitor_write(file);
+	monitor_write(":"); monitor_writeDec(line);
 	monitor_write("\nSystem halted T_T");
 	asm volatile("cli; hlt");
 }

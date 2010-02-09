@@ -18,12 +18,15 @@
 #define EX_TH_EXCEPTION 0x10001		//ERROR code : just one thread exits, because of an unhandled exception
 #define EX_PR_EXCEPTION 0x10002		//ERROR code : all process finishes, because of an unhandled exception
 
+#define USER_STACK_SIZE 0x8000	//32k, but pages will be mapped one by one as used
+
 typedef void (*thread_entry)(void*);
 
 struct process {
 	uint32_t pid, uid, privilege, threads;
 	struct process *parent;
 	struct page_directory *pagedir;
+	size_t stacksBottom;
 
 	struct process *next;	//Forms a linked list
 };
@@ -35,6 +38,7 @@ struct thread {
 	uint32_t timeWait;
 	void* kernelStack_addr;
 	uint32_t kernelStack_size;
+	struct segment_map *userStack_seg;
 
 	struct thread *next;	//Forms a linked list
 };

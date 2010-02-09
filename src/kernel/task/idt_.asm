@@ -1,6 +1,7 @@
 ; UNRELATED
 
 [GLOBAL gdt_flush]
+[GLOBAL tss_flush]
 
 gdt_flush:
   mov eax, [esp+4]
@@ -16,6 +17,11 @@ gdt_flush:
 
 .flush:
   ret
+
+tss_flush:
+	mov ax, 0x2B
+	ltr ax
+	ret
 
 ; RELATED
 

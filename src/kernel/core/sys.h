@@ -14,4 +14,6 @@ void panic(char* message, char* file, int line);
 void sti();		//GLOBAL SYSTEM MUTEX
 void cli();
 
+#define WHERE { monitor_write("(kernel:"); monitor_write(__FILE__); monitor_write(":"); monitor_writeDec(__LINE__); monitor_write(") "); }
+
 #endif

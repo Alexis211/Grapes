@@ -58,6 +58,6 @@ struct phdr {
 
 int elf_check(uint8_t *data);	//0 if ok, 1 if not a valid ELF
 thread_entry elf_load(uint8_t *data, struct process* process);	//Load an ELF to a process, return entry point
-struct process* elf_exec(uint8_t *data);	//Creates a new process and a thread for running ELF file
+struct process* elf_exec(uint8_t *data, int privilege);	//Creates a new process and a thread for running ELF file
 
 #endif

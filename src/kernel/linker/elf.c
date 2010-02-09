@@ -31,10 +31,10 @@ thread_entry elf_load(uint8_t *data, struct process* process) {
 	return (thread_entry)ehdr->e_entry;
 }
 
-struct process* elf_exec(uint8_t *data) {
+struct process* elf_exec(uint8_t *data, int privilege) {
 	if (elf_check(data)) return 0;
 	
-	struct process* p = process_new(0, 0, PL_DRIVER);
+	struct process* p = process_new(0, 0, privilege);
 
 	thread_entry e = elf_load(data, p);
 

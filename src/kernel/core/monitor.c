@@ -88,3 +88,24 @@ void monitor_writeHex(uint32_t v) {
 		v = v << 4;
 	}
 }
+
+void monitor_writeDec(uint32_t v) {
+	if (v == 0) {
+		monitor_put('0');
+		return;
+	}
+
+	char numbers[] = "0123456789";
+	while (v > 0) {
+		int order = 1, no = 1;
+		while (v / order > 0) order *= 10;
+		order /= 10;
+		monitor_put(numbers[v / order]);
+		v = v - (v / order * order);
+		while (v / no > 0) no *= 10;
+		while (no < order) {
+			monitor_put('0');
+			no *= 10;
+		}
+	}
+}

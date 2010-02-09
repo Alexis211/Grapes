@@ -2,6 +2,8 @@
 #include <core/sys.h>
 #include <core/monitor.h>
 #include <mem/mem.h>
+#include <mem/seg.h>
+#include <mem/gdt.h>
 #include "timer.h"
 
 #define KSTACKSIZE 0x8000
@@ -75,6 +77,8 @@ void tasking_switch() {
 
 	current_thread = thread_next();
 
+	gdt_setKernelStack(((uint32_t)current_thread->kernelStack_addr) + current_thread->kernelStack_size);
+
 	asm volatile("			\
 			mov %0, %%ebp;	\
 			mov %1, %%esp;	\
@@ -96,14 +100,14 @@ void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint3
 
 uint32_t tasking_handleException(struct registers *regs) {
 	if (current_thread == 0) return 0;	//No tasking yet
-	monitor_write("\n(task.c:99) Unhandled exception : ");
+	NL; WHERE; monitor_write("Unhandled exception : ");
 	char *exception_messages[] = {"Division By Zero","Debug","Non Maskable Interrupt","Breakpoint",
     "Into Detected Overflow","Out of Bounds","Invalid Opcode","No Coprocessor", "Double Fault",
     "Coprocessor Segment Overrun","Bad TSS","Segment Not Present","Stack Fault","General Protection Fault",
     "Page Fault","Unknown Interrupt","Coprocessor Fault","Alignment Check","Machine Check"};
 	monitor_write(exception_messages[regs->int_no]);
 	monitor_write(" at "); monitor_writeHex(regs->eip);
-	monitor_write(" >>> Thread exiting.\n");
+	monitor_write("\n>>> Thread exiting.\n");
 	thread_exit_stackJmp(EX_TH_EXCEPTION);
 	PANIC("This should never have happened. Please report this.");
 }
@@ -163,9 +167,44 @@ static uint32_t thread_runnable(struct thread *t) {
 }
 
 static void thread_run(struct thread *thread, thread_entry entry_point, void *data) {
-	pagedir_switch(thread->process->pagedir);	//TODO : take into account privilege level
-	asm volatile("sti");
-	entry_point(data);
+	pagedir_switch(thread->process->pagedir);
+	if (thread->process->privilege >= PL_SERVICE) {	//User mode !
+		uint32_t *stack = (uint32_t*)(thread->userStack_seg->start + thread->userStack_seg->len);
+
+		stack--; *stack = (uint32_t)data;
+		stack--; *stack = 0;
+		size_t esp = (size_t)stack, eip = (size_t)entry_point;
+		//Setup a false structure for returning from an interrupt :
+		//value for esp is in ebx, for eip is in ecx
+		//- update data segments to 0x23 = user data segment with RPL=3
+		//- push value for ss : 0x23 (user data seg rpl3)
+		//- push value for esp
+		//- push flags
+		//- update flags, set IF = 1 (interrupts flag)
+		//- push value for cs : 0x1B = user code segment with RPL=3
+		//- push eip
+		//- return from fake interrupt
+		asm volatile("				\
+				mov $0x23, %%ax;	\
+				mov %%ax, %%ds;		\
+				mov %%ax, %%es;		\
+				mov %%ax, %%fs;		\
+				mov %%ax, %%gs;		\
+									\
+				pushl $0x23;		\
+				pushl %%ebx;		\
+				pushf;				\
+				pop %%eax;			\
+				or $0x200, %%eax;	\
+				push %%eax;			\
+				pushl $0x1B;		\
+				push %%ecx;			\
+				iret;				\
+				" : : "b"(esp), "c"(eip));
+	} else {
+		asm volatile("sti");
+		entry_point(data);
+	}
 	thread_exit(0);
 }
 
@@ -173,6 +212,12 @@ struct thread *thread_new(struct process *proc, thread_entry entry_point, void *
 	struct thread *t = kmalloc(sizeof(struct thread));
 	t->process = proc;
 	proc->threads++;
+
+	if (proc->privilege >= PL_SERVICE) {	//We are running in user mode
+		proc->stacksBottom -= USER_STACK_SIZE;
+		t->userStack_seg = seg_map(simpleseg_make(proc->stacksBottom, USER_STACK_SIZE, 1), proc->pagedir);
+	}
+
 	t->kernelStack_addr = kmalloc(KSTACKSIZE);
 	t->kernelStack_size = KSTACKSIZE;
 
@@ -208,6 +253,7 @@ struct process *process_new(struct process* parent, uint32_t uid, uint32_t privi
 	p->parent = parent;
 	p->pagedir = pagedir_new();
 	p->next = processes;
+	p->stacksBottom = 0xDF000000;
 	processes = p;
 	return p;
 }

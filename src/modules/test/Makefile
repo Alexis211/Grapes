@@ -4,7 +4,7 @@ CC = gcc
 CFLAGS = -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -Wall -Wextra -I ../../library
 
 LD = ld
-LDFLAGS = -T ../../library/link.ld -L ../../library
+LDFLAGS = -T ../../library/link.ld -L ../../library -Map main.map
 
 Objects = main.o
 Outfile = test.elf
