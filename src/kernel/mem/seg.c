@@ -1,8 +1,8 @@
 #include "seg.h"
 #include "mem.h"
 
-struct segment_map *seg_map(struct segment* seg, struct page_directory *pagedir) {
-	struct segment_map *sm = seg->map(seg, pagedir);
+struct segment_map *seg_map(struct segment* seg, struct page_directory *pagedir, size_t offset) {
+	struct segment_map *sm = seg->map(seg, pagedir, offset);
 	if (sm == 0) return 0;
 	seg->mappings++;
 	sm->seg = seg;
@@ -45,7 +45,7 @@ struct segment* simpleseg_make(size_t start, size_t len, int writable) {
 	return se;
 }
 
-struct segment_map* simpleseg_map(struct segment* seg, struct page_directory* pagedir) {
+struct segment_map* simpleseg_map(struct segment* seg, struct page_directory* pagedir, size_t offset) {
 	struct segment_map *sm = kmalloc(sizeof(struct segment_map));
 	sm->start = ((struct simpleseg*)(seg->seg_data))->start;
 	sm->len = ((struct simpleseg*)(seg->seg_data))->len;

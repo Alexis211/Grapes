@@ -21,7 +21,7 @@ thread_entry elf_load(uint8_t *data, struct process* process) {
 	phdr = (struct elf_phdr*)((uint8_t*)(data + ehdr->e_phoff));
 	for (i = 0; i < ehdr->e_phnum; i++) {
 		if (phdr[i].p_type == PT_LOAD) {
-			seg_map(simpleseg_make(phdr[i].p_vaddr, phdr[i].p_memsz, (phdr[i].p_flags & PF_W) != 0), process->pagedir);
+			seg_map(simpleseg_make(phdr[i].p_vaddr, phdr[i].p_memsz, (phdr[i].p_flags & PF_W) != 0), process->pagedir, 0);
 			memcpy((uint8_t*)phdr[i].p_vaddr, data + phdr[i].p_offset, phdr[i].p_filesz);
 			if (phdr[i].p_memsz > phdr[i].p_filesz) {
 				memset((uint8_t*)phdr[i].p_vaddr + phdr[i].p_memsz, 0, phdr[i].p_memsz - phdr[i].p_filesz);

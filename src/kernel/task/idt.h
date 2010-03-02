@@ -27,7 +27,8 @@ struct registers {
 typedef void (*int_callback)(struct registers*);
 
 void idt_init();
-void idt_handleIrq(int number, int_callback func);
+void idt_handleIrq(int number, int_callback func);	//Set IRQ handler
+void idt_waitIrq(int number);	//ask current thread to wait for IRQ
 
 #endif
 

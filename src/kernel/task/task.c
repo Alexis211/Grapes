@@ -88,6 +88,10 @@ void tasking_switch() {
 		: : "r"(current_thread->ebp), "r"(current_thread->esp), "r"(current_thread->eip));
 }
 
+void tasking_schedule() {
+	asm volatile("int $64" : : "a"(1));
+}
+
 void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint32_t tablephysical) {
 	if (idx < 896) return;
 	struct process* it = processes;
@@ -121,7 +125,12 @@ void thread_sleep(uint32_t msecs) {
 	if (current_thread == 0) return;
 	current_thread->state = TS_SLEEPING;
 	current_thread->timeWait = timer_time() + msecs;
-	asm volatile("int $64" : : "a"(1));
+	tasking_schedule();
+}
+
+int proc_priv() {
+	if (current_thread == 0) return PL_UNKNOWN;
+	return current_thread->process->privilege;
 }
 
 void thread_exit2(uint32_t reason) {		//See EX_TH_* defines in task.h
@@ -167,7 +176,10 @@ void process_exit(uint32_t retval) {
 
 static uint32_t thread_runnable(struct thread *t) {
 	if (t->state == TS_RUNNING) return 1;
-	if (t->state == TS_SLEEPING && timer_time() >= t->timeWait) return 1;
+	if (t->state == TS_SLEEPING && timer_time() >= t->timeWait) {
+		t->state = TS_RUNNING;
+		return 1;
+	}
 	return 0;
 }
 
@@ -220,7 +232,7 @@ struct thread *thread_new(struct process *proc, thread_entry entry_point, void *
 
 	if (proc->privilege >= PL_SERVICE) {	//We are running in user mode
 		proc->stacksBottom -= USER_STACK_SIZE;
-		t->userStack_seg = seg_map(simpleseg_make(proc->stacksBottom, USER_STACK_SIZE, 1), proc->pagedir);
+		t->userStack_seg = seg_map(simpleseg_make(proc->stacksBottom, USER_STACK_SIZE, 1), proc->pagedir, 0);
 	}
 
 	t->kernelStack_addr = kmalloc(KSTACKSIZE);

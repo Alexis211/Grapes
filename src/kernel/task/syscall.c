@@ -14,6 +14,7 @@ CALL0V(tasking_switch, schedule_sc);
 CALL1V(thread_sleep, thread_sleep_sc);
 CALL1V(process_exit, process_exit_sc);
 CALL1(monitor_write, printk_sc);
+CALL1V(idt_waitIrq, irq_wait_sc);
 
 static void thread_new_sc(struct registers* r) {
 	thread_new(current_thread->process, (thread_entry)r->ebx, (void*)r->ecx);
@@ -26,4 +27,5 @@ int_callback syscalls[] = {
 	process_exit_sc,
 	printk_sc,
 	thread_new_sc,
+	irq_wait_sc,
 	0 };

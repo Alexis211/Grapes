@@ -65,6 +65,7 @@ struct idt_entry idt_entries[256];
 struct idt_ptr idt_ptr;
 
 static int_callback irq_handlers[16] = {0};
+static struct thread* irq_wakeup[16] = {0};
 
 void idt_isrHandler(struct registers regs) {
 	if ((regs.int_no == 14 && paging_fault(&regs) != 0) || regs.int_no != 14) {
@@ -80,16 +81,18 @@ void idt_isrHandler(struct registers regs) {
 } 
 
 void idt_irqHandler(struct registers regs) {
-	uint32_t doSwitch = 0;
-	doSwitch |= (regs.int_no == 32);	//IRQ0 = timer
+	uint32_t doSwitch = (regs.err_code == 0);	//IRQ0 = timer
 	if (regs.err_code > 7) {
 		outb(0xA0, 0x20);
 	}
 	outb(0x20, 0x20);
+	if (irq_wakeup[regs.err_code] != 0) {
+		irq_wakeup[regs.err_code]->state = TS_RUNNING;
+		irq_wakeup[regs.err_code] = 0;
+		doSwitch = 1;
+	}
 	if (irq_handlers[regs.err_code] != 0) {
 		irq_handlers[regs.err_code](&regs);
-	} else {
-		monitor_write("Unhandled IRQ "); monitor_writeHex(regs.int_no - 32); monitor_write("\n");
 	}
 	if (doSwitch) tasking_switch();
 }
@@ -98,7 +101,7 @@ void idt_syscallHandler(struct registers regs) {
 	if (syscalls[regs.eax] != 0) {
 		syscalls[regs.eax](&regs);
 	} else {
-		PANIC("unhandled syscall");
+		monitor_write("Unhandled syscall...\n");
 	}
 }
 
@@ -187,5 +190,15 @@ void idt_init() {
 }
 
 void idt_handleIrq(int number, int_callback func) {
-	irq_handlers[number] = func;
+	if (number < 16 && number >= 0) {
+		irq_handlers[number] = func;
+	}
+}
+
+void idt_waitIrq(int number) {
+	if (number < 16 && number >= 0 && proc_priv() <= PL_DRIVER) {
+		irq_wakeup[number] = current_thread;
+		current_thread->state = TS_WAKEWAIT;
+		tasking_schedule();
+	}
 }

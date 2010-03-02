@@ -29,3 +29,7 @@ void printk(char* str) {
 void thread_new(void (*entry)(void*), void *data) {
 	call(5, (unsigned)entry, (unsigned)data, 0, 0, 0);
 }
+
+void irq_wait(int number) {
+	call(6, number, 0, 0, 0, 0);
+}

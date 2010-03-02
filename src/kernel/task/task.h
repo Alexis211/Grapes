@@ -7,8 +7,9 @@
 
 #define TS_RUNNING 0	
 #define TS_SLEEPING 1	//Sleeping for a defined amount of time
-#define TS_WAIKWAIT 2	//Waiting to be waked up by something precise (thread currently blocked)
+#define TS_WAKEWAIT 2	//Waiting to be waked up by something precise (thread currently blocked)
 
+#define PL_UNKNOWN 4
 #define PL_USER 3
 #define PL_SERVICE 2
 #define PL_DRIVER 1
@@ -47,10 +48,12 @@ extern struct thread *current_thread;
 
 void tasking_init();
 void tasking_switch();
+void tasking_schedule();
 void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint32_t tablePhysical);
 uint32_t tasking_handleException(struct registers *regs);
 
 void thread_sleep(uint32_t msecs);
+int proc_priv();	//Returns current privilege level
 void thread_exit();
 void process_exit(uint32_t retval);
 struct thread * thread_new(struct process *proc, thread_entry entry_point, void *data);
