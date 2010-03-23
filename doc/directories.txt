@@ -1,0 +1,11 @@
+This file explains all the directories of the source tree :
+
+doc				documentation about the system
+mnt				temporary folder for mounting disk images
+src				source code
+src/include		all includable headers to be used in userland
+src/include/gc	Grapes Core (communication with the kernel) headers
+src/include/gm	Grapes Modules headers
+src/kernel		kernel source
+src/library		source and linkable objects to be used by userland applications
+src/modules		userland applications

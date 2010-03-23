@@ -1,6 +1,7 @@
 #include "shm.h"
 #include <mem/mem.h>
 #include <mem/seg.h>
+#include <task/task.h>
 
 struct segment* shmseg_make(size_t len, struct process* owner) {
 	struct shmseg *ss = kmalloc(sizeof(struct shmseg));
@@ -53,4 +54,29 @@ void shmseg_delete(struct segment *seg) {
 		if (ss->frames[i] != 0) frame_free(ss->frames[i]);
 	}
 	kfree(ss->frames);
+}
+
+struct segment_map* shmseg_getByOff(struct process* pr, size_t offset) {
+	struct segment_map* m = pr->pagedir->mappedSegs;
+	while (m != 0) {
+		if (m->start == offset && m->seg->delete == shmseg_delete) return m;
+		m = m->next;
+	}
+	return 0;
+}
+
+// **** **** SHM syscalls **** ****
+int shm_create(size_t offset, size_t len) {
+	if (offset >= 0xE0000000) return -1;
+	if (len >= 0x10000000) return -1;
+	if (offset+len >= 0xE0000000) return -1;
+	seg_map(shmseg_make(len, current_thread->process), current_thread->process->pagedir, offset);
+	return 0;
+}
+
+int shm_delete(size_t offset) {
+	struct segment_map *s = shmseg_getByOff(current_thread->process, offset);
+	if (s == 0) return -1;
+	seg_unmap(s);
+	return 0;
 }

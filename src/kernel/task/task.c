@@ -88,10 +88,6 @@ void tasking_switch() {
 		: : "r"(current_thread->ebp), "r"(current_thread->esp), "r"(current_thread->eip));
 }
 
-void tasking_schedule() {
-	asm volatile("int $64" : : "a"(1));
-}
-
 void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint32_t tablephysical) {
 	if (idx < 896) return;
 	struct process* it = processes;
@@ -119,13 +115,19 @@ uint32_t tasking_handleException(struct registers *regs) {
 		thread_exit_stackJmp(EX_TH_EXCEPTION);
 	}
 	PANIC("This should never have happened. Please report this.");
+	return 0;
 }
 
 void thread_sleep(uint32_t msecs) {
 	if (current_thread == 0) return;
 	current_thread->state = TS_SLEEPING;
 	current_thread->timeWait = timer_time() + msecs;
-	tasking_schedule();
+	tasking_switch();
+}
+
+void thread_goInactive() {
+	current_thread->state = TS_WAKEWAIT;
+	tasking_switch();
 }
 
 int proc_priv() {
@@ -271,6 +273,11 @@ struct process *process_new(struct process* parent, uint32_t uid, uint32_t privi
 	p->pagedir = pagedir_new();
 	p->next = processes;
 	p->stacksBottom = 0xDF000000;
+
+	p->next_objdesc = 0;
+	p->objects = 0;
+	obj_createP(p);	//create process' root object and add descriptor 0 to it
+
 	processes = p;
 	return p;
 }
@@ -296,6 +303,7 @@ static void process_delete(struct process *pr) {
 		while (it->next->process == pr) thread_delete(it->next);
 		it = it->next;
 	}
+	obj_closeall(pr);
 	pagedir_delete(pr->pagedir);
 	if (processes == pr) {
 		processes = pr->next;

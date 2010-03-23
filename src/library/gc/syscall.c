@@ -1,4 +1,4 @@
-#include "syscall.h"
+#include <gc/syscall.h>
 
 static int call(unsigned a, unsigned b, unsigned c, unsigned d, unsigned e, unsigned f) {
 	unsigned ret;
@@ -32,4 +32,16 @@ void thread_new(void (*entry)(void*), void *data) {
 
 void irq_wait(int number) {
 	call(6, number, 0, 0, 0, 0);
+}
+
+int proc_priv() {
+	return call(7, 0, 0, 0, 0, 0);
+}
+
+int shm_create(size_t offset, size_t length) {
+	return call(8, offset, length, 0, 0, 0);
+}
+
+int shm_delete(size_t offset) {
+	return call(9, offset, 0, 0, 0, 0);
 }

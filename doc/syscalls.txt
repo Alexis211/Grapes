@@ -12,5 +12,9 @@ id=eax	Name			Parameters				Description
   5		thread_new		ebx: entry point		Creates a new thread
 						ecx: data pointer
   6		irq_wait		ebx: irq number			Waits for an IRQ (requires privilege PL_DRIVER)
+  7		proc_priv		none					Returns current process privilege level
+  8		shm_create		ebx: offset				Create a shared memory segment at offset (ret = errcode)
+						ecx: length
+  9		shm_delete		ebx: offset				Delete a shared memory segment at offset (ret = errcode)
 
 If a processes wishes to exit with an error code, it HAS to use process_exit. thread_exit will do nothing.

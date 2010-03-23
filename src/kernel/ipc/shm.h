@@ -16,9 +16,12 @@ void shmseg_unmap(struct segment_map*);
 void shmseg_delete(struct segment *seg);
 int shmseg_handleFault(struct segment_map *map, size_t addr, int write);
 
+		//find a shared memory segment in current address space by its offset
+struct segment_map* shmseg_getByOff(struct process* pr, size_t offset);	
+
 //Shared memory syscalls
-void shm_create(size_t offset, size_t len);
-void shm_delete(size_t offset);
+int shm_create(size_t offset, size_t len);
+int shm_delete(size_t offset);
 
 #endif
 

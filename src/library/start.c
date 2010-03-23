@@ -1,4 +1,4 @@
-#include "grapes/syscall.h"
+#include <gc/syscall.h>
 
 extern int main();
 

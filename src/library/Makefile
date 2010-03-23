@@ -1,13 +1,13 @@
 .PHONY: clean, mrproper
 
 CC = gcc
-CFLAGS = -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -Wall -Wextra
+CFLAGS = -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -Wall -Wextra -I../include
 
 LD = ld
 LDFLAGS = -r
 
 Library = grapes.o
-Objects = grapes/syscall.o \
+Objects = gc/syscall.o \
 		  start.o
 
 all: $(Library)

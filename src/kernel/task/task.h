@@ -3,6 +3,7 @@
 
 #include <types.h>
 #include <mem/paging.h>
+#include <ipc/object.h>
 #include "idt.h"
 
 #define TS_RUNNING 0	
@@ -29,6 +30,9 @@ struct process {
 	struct page_directory *pagedir;
 	size_t stacksBottom;
 
+	struct obj_descriptor *objects;
+	uint32_t next_objdesc;
+
 	struct process *next;	//Forms a linked list
 };
 
@@ -48,11 +52,11 @@ extern struct thread *current_thread;
 
 void tasking_init();
 void tasking_switch();
-void tasking_schedule();
 void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint32_t tablePhysical);
 uint32_t tasking_handleException(struct registers *regs);
 
 void thread_sleep(uint32_t msecs);
+void thread_goInactive();	//Blocks the current thread. another one must be there to wake it up at some point.
 int proc_priv();	//Returns current privilege level
 void thread_exit();
 void process_exit(uint32_t retval);

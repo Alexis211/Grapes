@@ -1,0 +1,11 @@
+Requests are identified by a 32bit function number, composed as follows :
+    (8 bit) parameter and return type ; (24bit) function number
+
+the first 8 bits are :
+	2bit answer type ; 2bit parameter a ; 2bit parameter b ; 2bit parameter c
+
+each two bit couple can be one of the following :
+- 00 : void
+- 01 : object descriptor number (will be copied with a new number to reciever)
+- 10 : integer
+- 11 : long long (replies), or shared memory offset (requests and messages)

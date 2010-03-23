@@ -198,7 +198,6 @@ void idt_handleIrq(int number, int_callback func) {
 void idt_waitIrq(int number) {
 	if (number < 16 && number >= 0 && proc_priv() <= PL_DRIVER) {
 		irq_wakeup[number] = current_thread;
-		current_thread->state = TS_WAKEWAIT;
-		tasking_schedule();
+		thread_goInactive();
 	}
 }
