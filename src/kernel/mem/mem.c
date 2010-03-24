@@ -75,7 +75,7 @@ static struct heap kheap;
 void kheap_init() {
 	heap_create(&kheap, (mem_placementAddr & 0xFFFFF000) + 0x1000, KHEAP_IDXSIZE, KHEAP_INITSIZE, KHEAP_MAXSIZE);
 	kheap_working = 1;
-	monitor_write("Kernel heap ok\n");
+	monitor_write("[KHeap] ");
 }
 
 void* kmalloc(size_t size) {

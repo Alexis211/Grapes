@@ -27,17 +27,19 @@ void obj_closeP(struct process* p, int id) {
 	if (obj == 0) return;
 	objdesc_rm(p, id);
 	if (obj->owner == p) {
-		if (obj->descriptors > 0) {
+		if (obj->descriptors > 0) {	//TODO !!!
 			obj->owner = 0; // set object to be invalid
-			//if a request was being handled, give it a null response
+			//if a request was being handled, set it to interrupted (acknowledged = 3) and wake up receiver thread or if nonblocking delete it
+			//unlock objects busymutex
 		} else {
 			obj_delete(obj);
 		}
 	} else {
 		if (obj->descriptors == 0 && obj->owner == 0) {
 			obj_delete(obj);
+		} else if (obj->descriptors == 1 && obj->owner != 0) {
+			//future : send message becuz object closed for everyone
 		}
-		//future : send message becuz object was closed
 	}
 }
 
@@ -48,6 +50,8 @@ void obj_closeall(struct process* p) {
 // DESCRIPTORS
 
 int objdesc_add(struct process* proc, struct object* obj) {
+	int tmp = objdesc_get(proc, obj);
+	if (tmp != -1) { return -1; }	//signal that a descriptor already exists
 	struct obj_descriptor *ret = kmalloc(sizeof(struct obj_descriptor));
 	ret->obj = obj;
 	ret->id = proc->next_objdesc;

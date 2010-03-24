@@ -45,10 +45,10 @@ void paging_init(size_t totalRam) {
 		kernel_pagedir->tables[i] = kernel_pagedir->tables[i + 896];
 	}
 
-	monitor_write("Page dir is at: ");
+	monitor_write("{PD: ");
 	monitor_writeHex(kernel_pagedir->physicalAddr);
 	pagedir_switch(kernel_pagedir);
-	monitor_write("\nPaging started\n");
+	monitor_write("} [Paging] ");
 }
 
 void paging_cleanup() {
@@ -57,7 +57,7 @@ void paging_cleanup() {
 		kernel_pagedir->tablesPhysical[i] = 0;
 		kernel_pagedir->tables[i] = 0;
 	}
-	monitor_write("Pages cleaned up\n");
+	monitor_write("[PD Cleanup] ");
 }
 
 void pagedir_switch(struct page_directory *pd) {

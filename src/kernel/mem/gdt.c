@@ -54,5 +54,5 @@ void gdt_init() {
 	gdt_flush((uint32_t)&gdt_ptr);
 	tss_flush();
 
-	monitor_write("GDT ok\n");
+	monitor_write("[GDT] ");
 }

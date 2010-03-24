@@ -4,6 +4,7 @@
 #include <mem/mem.h>
 #include <mem/seg.h>
 #include <mem/gdt.h>
+#include <ipc/object.h>
 #include "timer.h"
 
 #define KSTACKSIZE 0x8000
@@ -39,7 +40,7 @@ void tasking_init() {
 	idle_thread = thread_new(kernel_process, task_idle, 0);
 	threads = 0;	//Do not include idle thread in threads
 	sti();
-	monitor_write("Tasking set up\n");
+	monitor_write("[Tasking] ");
 }
 
 static struct thread *thread_next() {
@@ -128,6 +129,10 @@ void thread_sleep(uint32_t msecs) {
 void thread_goInactive() {
 	current_thread->state = TS_WAKEWAIT;
 	tasking_switch();
+}
+
+void thread_wakeUp(struct thread* t) {
+	if (t->state == TS_WAKEWAIT) t->state = TS_RUNNING;
 }
 
 int proc_priv() {

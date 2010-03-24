@@ -32,5 +32,5 @@ void timer_init(uint32_t freq) {
 	outb(0x40, l);
 	outb(0x40, h);
 
-	monitor_write("Timer started\n");
+	monitor_write("[PIT] ");
 }

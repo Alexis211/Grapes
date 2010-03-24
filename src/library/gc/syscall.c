@@ -45,3 +45,39 @@ int shm_create(size_t offset, size_t length) {
 int shm_delete(size_t offset) {
 	return call(9, offset, 0, 0, 0, 0);
 }
+
+int object_create() {
+	return call(10, 0, 0, 0, 0, 0);
+}
+
+int object_owned(int descriptor) {
+	return call(11, descriptor, 0, 0, 0, 0);
+}
+
+void object_close(int descriptor) {
+	call(12, descriptor, 0, 0, 0, 0);
+}
+
+int request_get(int descriptor, struct user_request *rq, int wait) {
+	return call(13, descriptor, (size_t)rq, wait, 0, 0);
+}
+
+int request_has(int descriptor) {
+	return call(14, descriptor, 0, 0, 0, 0);
+}
+
+void request_answer(int descriptor, int answer1, int answer2) {
+	call(15, descriptor, answer1, answer2, 0, 0);
+}
+
+int request_mapShm(int descriptor, size_t offset, int number) {
+	return call(16, descriptor, offset, number, 0, 0);
+}
+
+int request(int descriptor, struct user_sendrequest *rq) {
+	return call(17, descriptor, (size_t)rq, 0, 0, 0);
+}
+
+int send_msg(int descriptor, struct user_sendrequest *rq) {
+	return call(18, descriptor, (size_t)rq, 0, 0, 0);
+}

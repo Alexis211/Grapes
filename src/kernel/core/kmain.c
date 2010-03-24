@@ -31,7 +31,7 @@ void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 		PANIC("wrong multiboot magic number.");
 	}
 
-	monitor_write("Grapes kernel booting ...\n");
+	monitor_write("Grapes 0.0.3 'I am no sweet potato' starting up :\n");
 
 	idt_init();
 
@@ -43,8 +43,9 @@ void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 	timer_init(20);
 	tasking_init();
 	
-	monitor_write("Loading modules...\n");
+	monitor_write("\nLoading modules :\n");
 	for (i = 0; i < mbd->mods_count; i++) {
+		monitor_write(" * ");
 		monitor_write((char*)mods[i].string);
 		if (elf_check((uint8_t*)mods[i].mod_start)) {
 			monitor_write(" : Invalid ELF file\n");
@@ -57,7 +58,7 @@ void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 		}
 	}
 
-	monitor_write("Passing control to loaded modules...\n");
+	monitor_write("Modules now RULE THE WORLD !\n");
 	sti();
 	tasking_switch();
 }

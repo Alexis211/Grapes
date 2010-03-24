@@ -1,11 +1,25 @@
+The requests can be of two types :
+- Blocking, IE the sender waits for an answer
+- Nonblocking, the request is a simple message.
+
 Requests are identified by a 32bit function number, composed as follows :
     (8 bit) parameter and return type ; (24bit) function number
 
 the first 8 bits are :
-	2bit answer type ; 2bit parameter a ; 2bit parameter b ; 2bit parameter c
+	2bit answer type ; 2bit parameter a type ; 2bit parameter b type ; 2bit parameter c type
 
 each two bit couple can be one of the following :
 - 00 : void
 - 01 : object descriptor number (will be copied with a new number to reciever)
-- 10 : integer
-- 11 : long long (replies), or shared memory offset (requests and messages)
+- 10 : long
+- 11 : long long (replies), or shared memory offset in sender's space (requests and messages)
+
+When shared memory segments are sent as request parameters from a process to the same process, the pointer
+to the memory is kept and sent to the handler function. If handler is in another process, receiver will
+have to call request_mapShm specifying a pointer. Shared memory is automatically unmapped when requests
+yields an answer, and is kept when the request is nonblocking (message).
+
+When objects are sent as request parameters, the receiver process will get an immediately usable object
+descriptor. The descriptor is closed in blocking requests after the request yields an answer (except if the
+request is handled in the same process than the sender, OR if the receiver already had a descriptor to
+this object). The descriptor is kept when sent by a nonblocking request (message).

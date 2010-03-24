@@ -3,7 +3,6 @@
 
 #include <types.h>
 #include <mem/paging.h>
-#include <ipc/object.h>
 #include "idt.h"
 
 #define TS_RUNNING 0	
@@ -57,6 +56,7 @@ uint32_t tasking_handleException(struct registers *regs);
 
 void thread_sleep(uint32_t msecs);
 void thread_goInactive();	//Blocks the current thread. another one must be there to wake it up at some point.
+void thread_wakeUp(struct thread *t);
 int proc_priv();	//Returns current privilege level
 void thread_exit();
 void process_exit(uint32_t retval);

@@ -186,7 +186,7 @@ void idt_init() {
 
 	idt_flush((int32_t)&idt_ptr);
 
-	monitor_write("IDT ok\n");
+	monitor_write("[IDT] ");
 }
 
 void idt_handleIrq(int number, int_callback func) {

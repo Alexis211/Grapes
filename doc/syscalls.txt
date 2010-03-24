@@ -16,5 +16,20 @@ id=eax	Name			Parameters				Description
   8		shm_create		ebx: offset				Create a shared memory segment at offset (ret = errcode)
 						ecx: length
   9		shm_delete		ebx: offset				Delete a shared memory segment at offset (ret = errcode)
+  10	object_create	none					Creates an object for current process (returns a descriptor to it)
+  11	object_owned	ebx: object descriptor	True (1) if object with this descriptor is ours, false(0) elsewhere
+  12	object_close	ebx: object descriptor	Closes descriptor to an object (deleting it if necessary)
+  13	request_get		ebx: object descriptor	Gets a request pending on object (only if we own it)
+						ecx: pointer to write request
+						edx: wait for a request ?
+  14	request_has		ebx: object descriptor	Is there a request waiting on this object ?
+  15	request_answer	ebx: object descriptor
+						ecx, edx: answer		Answer a request on object
+  16	request_mapShm	ebx: object descriptor	Map shared memory sent with request to receiver's address space
+						ecx: offset
+						edx: parameter number (0, 1 or 2)
+  17	request			ebx: object descriptor	Send a blocking request to object
+						ecx: pointer to user_sendrequest struct with information
+  18	send_msg		same as above			Send a nonblocking request to object, same as above
 
 If a processes wishes to exit with an error code, it HAS to use process_exit. thread_exit will do nothing.
