@@ -107,7 +107,7 @@ int object_create() {
 
 int object_owned(int id) {
 	struct object *obj = objdesc_read(current_thread->process, id);
-	if (obj == 0) return -1;
+	if (obj == 0) return -10;
 	if (obj->owner == current_thread->process) return 1;
 	return 0;
 }

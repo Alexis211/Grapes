@@ -33,3 +33,78 @@ id=eax	Name			Parameters				Description
   18	send_msg		same as above			Send a nonblocking request to object, same as above
 
 If a processes wishes to exit with an error code, it HAS to use process_exit. thread_exit will do nothing.
+
+====== SYSCALL DESCRIPTION ======
+
+= object_create (10)
+Parameters: none
+Returns: descriptor to created object, 0 if failure (should not happen)
+Creates an object belonging to current proces.
+
+= object_owned (11)
+Parameters: an object descriptor
+Returns:
+- 1 if object belongs to current process
+- 0 if object does not belong to current process
+- -10 if descriptor does not exist
+
+= object_close (12)
+Parameters: an object descriptor
+Returns: nothing
+Closes a given descriptor to an object. If descriptor does not exist, call is ignored.
+
+= request_get (13)
+Parameters: an object descriptor, a pointer to a location to write request, a boolean : wait for a request?
+Returns:
+- -10 if descriptor does not exist
+- -2 if object is not possesed by current process
+- -3 if a blocking request is currently being processed
+- -1 if no request is pending and [wait] is not set
+- 0 if a request was written to location (call successful)
+Fetches a waiting request or message on object, and deletes it or acknowledge it.
+
+= request_has (14)
+Parameters: an object descriptor
+Returns:
+- -10 if descriptor does not exist
+- -2 if object is not possesed by current process
+- 0 if no request is pending
+- 1 if a waiting request is there
+- 2 if a request is being processed
+
+= request_answer (15)
+Parameters: an object descriptor, two ints forming a long long if necessary
+Returns: nothing
+Answers a request marked as currently being processed, ignoring cases where :
+- descriptor does not exist
+- object does not belong to process
+- no request was being processed
+
+= request_mapShm (16)
+Parameters: [id] object descriptor, [pos] pointer to a location, [number] int
+Returns:
+- -9 if [number] < 0 or [number] > 2
+- -10 if descriptor does not exist
+- -2 if object is not possesed by current process
+- -3 if no request is being processed
+- -4 if there is usually no shared memory in parameter [number]
+- -7 if sender process is receiver process, in which case memory is already mapped somewhere
+- -5 if no shared memory was sent by this parameter
+- 0 if shared memory in parameter [number] of currently processed request of object [id] was mapped at [pos]
+
+= request (17)
+Parameters: [id] object descriptor, [pos] pointer to request data
+Returns:
+- -1 if an unknown error happened (should not happen)
+- -10 if descriptor does not exist
+- -11 if objet cannot handle requests
+- -2 if request was interrupted
+- 0 if request was handled and result written in [pos]->answer
+
+= send_msg (18)
+Parameters: [id] object descriptor, [pos] pointer to request data
+Returns:
+- -1 if an unknown error happened (should not happen)
+- -10 if descriptor does not exist
+- -11 if object cannot handle requests
+- 0 if nonblocking message was sent

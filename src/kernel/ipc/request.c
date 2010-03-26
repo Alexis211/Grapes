@@ -14,7 +14,7 @@ int request_get(int id, uint32_t ptr, int wait) {
 	//check if a request is pending. if request is being processed (acknowledged), return -3
 	if (obj->request != 0 && obj->request->acknowledged != RS_PENDING) return -3;
 	//if not (busymutex unlocked and request==0) && wait, then wait, else return -1
-	if (wait == 0) return -1;
+	if (wait == 0 && obj->request == 0) return -1;
 	while (obj->busyMutex != MUTEX_LOCKED && (obj->request == 0 || obj->request->acknowledged != RS_PENDING)) thread_sleep(1);
 	obj->request->acknowledged = RS_PROCESSED;
 	//when request pending (wait finished), write it to ptr
@@ -95,7 +95,7 @@ int request_mapShm(int id, uint32_t pos, int number) {
 	if (obj == 0) return -10;
 	if (obj->owner != current_thread->process) return -2;	
 	//if no request is being processes (including non-acknowledged waiting requests), return -3
-	if (obj->request == 0 || obj->request->acknowledged == RS_PENDING || obj->request->requester == 0) return -3;
+	if (obj->request == 0 || obj->request->acknowledged == RS_PENDING) return -3;
 	//check if the requests should have shm in parameter [number], if not return -4
 	int n = (obj->request->func >> (28 - (2 * number))) & 3;
 	if (n != PT_SHM) return -4;
@@ -117,16 +117,20 @@ int request_mapShm(int id, uint32_t pos, int number) {
 }
 
 static struct request *mkrequest(int id, struct thread *requester,
-		uint32_t func, uint32_t a, uint32_t b, uint32_t c) {
+		uint32_t func, uint32_t a, uint32_t b, uint32_t c, uint32_t *err) {
 	int i;
 	// get object from descriptor id, if none return 0
 	struct object *obj = objdesc_read(current_thread->process, id);
-	if (obj == 0) return 0;
+	if (obj == 0) {
+		*err = -10;
+		return 0;
+	}
 	// waitlock object's busy mutex
 	mutex_lock(&obj->busyMutex);
 	// if object cannot answer (owner == 0) return 0
 	if (obj->owner == 0) {
 		mutex_unlock(&obj->busyMutex);
+		*err = -11;
 		return 0;
 	}
 	// create request, fill it up :
@@ -176,10 +180,13 @@ static struct request *mkrequest(int id, struct thread *requester,
 }
 
 int request(int obj, uint32_t rq_ptr) {
+	uint32_t e = 0;
+
 	struct user_sendrequest *urq = (void*)rq_ptr;
 	//call mkrequest with parameters (requester thread = current thread)
-	struct request *rq = mkrequest(obj, current_thread, urq->func, urq->a, urq->b, urq->c);
+	struct request *rq = mkrequest(obj, current_thread, urq->func, urq->a, urq->b, urq->c, &e);
 	//if returned value is 0 (could not create request), return -1
+	if (e != 0) return e;
 	if (rq == 0) return -1;
 	//sleep until request is handled
 	thread_goInactive();
@@ -199,10 +206,13 @@ int request(int obj, uint32_t rq_ptr) {
 }
 
 int send_msg(int obj, uint32_t rq_ptr) {
+	uint32_t e = 0;
+
 	struct user_sendrequest *urq = (void*)rq_ptr;
 	//call mkrequest with parameters (requester thread = 0)
-	struct request *rq = mkrequest(obj, 0, urq->func, urq->a, urq->b, urq->c);
+	struct request *rq = mkrequest(obj, 0, urq->func, urq->a, urq->b, urq->c, &e);
 	//if returned value is 0, return -1 else return 0
+	if (e != 0) return e;
 	if (rq == 0) return -1;
 	return 0;
 }

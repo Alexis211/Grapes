@@ -5,33 +5,33 @@
 int obj = -1;
 
 void thread2(void* d) {
-	printk("[module:test:2] Creating new object...\n");
+	printk("[test:2] Creating new object...\n");
 	obj = object_create();
 	struct user_request rq;
 	while (1) {
-		printk("[module:test:2] Waiting for a request...\n");
+		printk("[test:2] Waiting for a request...\n");
 		request_get(obj, &rq, 1);
 		if (rq.isBlocking) {
-			printk("[module:test:2] Got request. Answering...\n");
+			printk("[test:2] Got request. Answering...\n");
 			request_answer(obj, 42, 0);
 		} else {
-			printk("[module:test:2] Got message. Ignoring it.\n");
+			printk("[test:2] Got message. Ignoring it.\n");
 		}
 	}
 }
 
 int main() {
-	printk("[module:test:1] Hi world !\n");
-	printk("[module:test:1] Creating new thread...\n");
+	printk("[test:1] Hi world !\n");
+	printk("[test:1] Creating new thread...\n");
 	thread_new(thread2, 0);
 	while (obj == -1);
-	printk("[module:test:1] Object was created. Sending request...\n");
+	printk("[test:1] Object was created. Sending request...\n");
 	struct user_sendrequest sr;
 	sr.func = 0x80000001;
 	request(obj, &sr);
-	printk("[module:test:1] Got answer. Sending message...\n");
+	printk("[test:1] Got answer. Sending message...\n");
 	send_msg(obj, &sr);
-	printk("[module:test:1] HAHA !!! Death in 10 seconds!\n");
+	printk("[test:1] HAHA !!! Death in 10 seconds!\n");
 	thread_sleep(10000);
 	return 0;
 }
