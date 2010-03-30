@@ -37,5 +37,6 @@ struct segment_map* simpleseg_map(struct segment* seg, struct page_directory* pa
 void simpleseg_unmap(struct segment_map*);
 void simpleseg_delete(struct segment *seg);
 int simpleseg_handleFault(struct segment_map* map, size_t addr, int write);
+int simpleseg_resize(struct segment_map *map, size_t len);
 
 #endif

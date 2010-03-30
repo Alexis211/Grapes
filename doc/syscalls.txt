@@ -31,6 +31,8 @@ id=eax	Name			Parameters				Description
   17	request			ebx: object descriptor	Send a blocking request to object
 						ecx: pointer to user_sendrequest struct with information
   18	send_msg		same as above			Send a nonblocking request to object, same as above
+  19	proc_setheap	ebx: start address		Creates/resizes/moves the heap segment allocated to this process (one per process)
+						ecx: end address
 
 If a processes wishes to exit with an error code, it HAS to use process_exit. thread_exit will do nothing.
 
@@ -73,7 +75,7 @@ Returns:
 - 2 if a request is being processed
 
 = request_answer (15)
-Parameters: an object descriptor, two ints forming a long long if necessary
+Parameters: an object descriptor, two ints forming a long long if necessary, an int which is the return status (error code) of the function
 Returns: nothing
 Answers a request marked as currently being processed, ignoring cases where :
 - descriptor does not exist

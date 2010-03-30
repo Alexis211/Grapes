@@ -26,7 +26,7 @@ struct page_directory {
 	struct segment_map *mappedSegs;
 };
 
-extern struct page_directory *kernel_pagedir;
+extern struct page_directory *kernel_pagedir, *current_pagedir;
 
 uint32_t frame_alloc();
 void frame_free(uint32_t id);

@@ -22,7 +22,6 @@ void frame_free(uint32_t id) {
 	bitset_clear(&frames, id);
 }
 
-
 void paging_init(size_t totalRam) {
 	uint32_t i;
 

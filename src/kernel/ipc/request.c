@@ -47,7 +47,7 @@ int request_has(int id) {
 	return 2;
 }
 
-void request_answer(int id, uint32_t answer, uint32_t answer2) {
+void request_answer(int id, uint32_t answer, uint32_t answer2, int errcode) {
 	int i;
 	//check if we own the object, if not return (also return if descriptor does not exist)
 	struct object *obj = objdesc_read(current_thread->process, id);
@@ -64,22 +64,27 @@ void request_answer(int id, uint32_t answer, uint32_t answer2) {
 	obj->request->acknowledged = RS_FINISHED;
 	switch (obj->request->func >> 30) {
 		case PT_OBJDESC:
-			if (obj->owner == obj->request->requester->process) {
+			if ((int)answer <= 0) {
 				obj->request->answer.n = answer;
 			} else {
-				int n = objdesc_get(obj->request->requester->process, objdesc_read(obj->owner, answer));
-				if (n == -1) {
-					n = objdesc_add(obj->request->requester->process, objdesc_read(obj->owner, answer));
+				if (obj->owner == obj->request->requester->process) {
+					obj->request->answer.n = answer;
+				} else {
+					int n = objdesc_get(obj->request->requester->process, objdesc_read(obj->owner, answer));
+					if (n == -1) {
+						n = objdesc_add(obj->request->requester->process, objdesc_read(obj->owner, answer));
+					}
+					obj->request->answer.n = n;
 				}
-				obj->request->answer.n = n;
 			}
 			break;
 		case PT_LONG:
 			obj->request->answer.n = answer;
 			break;
 		case PT_LONGLONG:
-			obj->request->answer.ll = (uint64_t)((uint64_t)answer << 32) | answer2;
+			obj->request->answer.ll = (uint64_t)((uint64_t)answer2 << 32) | answer;
 	}
+	obj->request->errcode = errcode;
 	//wake up receiver thread (thread_wakeUp)
 	thread_wakeUp(obj->request->requester);
 	//dereference request from object, unlock objects busymutex
@@ -150,15 +155,19 @@ static struct request *mkrequest(int id, struct thread *requester,
 		uint32_t v = (i == 0 ? a : (i == 1 ? b : c));
 		switch (n) {
 			case PT_OBJDESC:
-				if (obj->owner == current_thread->process) {
+				if ((int)v <= 0) {
 					rq->params[i] = v;
 				} else {
-					int d = objdesc_get(obj->owner, objdesc_read(current_thread->process, v));
-					if (d == -1) {
-						d = objdesc_add(obj->owner, objdesc_read(current_thread->process, v));
-						rq->obj_close[i] = d;
+					if (obj->owner == current_thread->process) {
+						rq->params[i] = v;
+					} else {
+						int d = objdesc_get(obj->owner, objdesc_read(current_thread->process, v));
+						if (d == -1) {
+							d = objdesc_add(obj->owner, objdesc_read(current_thread->process, v));
+							rq->obj_close[i] = d;
+						}
+						rq->params[i] = d;
 					}
-					rq->params[i] = d;
 				}
 				break;
 			case PT_LONG:
@@ -201,6 +210,7 @@ int request(int obj, uint32_t rq_ptr) {
 		case PT_LONGLONG:
 			urq->answerll = rq->answer.ll;
 	}
+	urq->errcode = rq->errcode;
 	kfree(rq);
 	return 0;
 }

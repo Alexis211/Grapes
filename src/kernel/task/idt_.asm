@@ -47,14 +47,8 @@ idt_flush:
    mov fs, ax
    mov gs, ax
 
-   mov eax, cr3
-   push eax
-
    call idt_%1Handler
    
-   pop eax
-   mov cr3, eax
-
    pop eax        ; reload the original data segment descriptor
    mov ds, ax
    mov es, ax

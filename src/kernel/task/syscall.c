@@ -31,6 +31,7 @@ CALL3V(request_answer, request_answer_sc);
 CALL3(request_mapShm, request_mapShm_sc);
 CALL2(request, request_sc);
 CALL2(send_msg, send_msg_sc);
+CALL2(process_setheapseg, proc_setheap_sc);
 
 static void thread_new_sc(struct registers* r) {
 	thread_new(current_thread->process, (thread_entry)r->ebx, (void*)r->ecx);
@@ -56,4 +57,5 @@ int_callback syscalls[] = {
 	request_mapShm_sc,
 	request_sc,
 	send_msg_sc,
+	proc_setheap_sc,
 	0 };

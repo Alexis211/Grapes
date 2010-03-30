@@ -66,8 +66,8 @@ int request_has(int descriptor) {
 	return call(14, descriptor, 0, 0, 0, 0);
 }
 
-void request_answer(int descriptor, int answer1, int answer2) {
-	call(15, descriptor, answer1, answer2, 0, 0);
+void request_answer(int descriptor, uint32_t answer1, uint32_t answer2, int errcode) {
+	call(15, descriptor, answer1, answer2, errcode, 0);
 }
 
 int request_mapShm(int descriptor, size_t offset, int number) {
@@ -80,4 +80,8 @@ int request(int descriptor, struct user_sendrequest *rq) {
 
 int send_msg(int descriptor, struct user_sendrequest *rq) {
 	return call(18, descriptor, (size_t)rq, 0, 0, 0);
+}
+
+int proc_setheap(size_t start, size_t end) {
+	return call(19, start, end, 0, 0, 0);
 }

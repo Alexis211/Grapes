@@ -16,6 +16,8 @@ thread_entry elf_load(uint8_t *data, struct process* process) {
 	int i;
 	if (elf_check(data)) return 0;
 
+	struct page_directory *r = current_pagedir;
+	cli();
 	pagedir_switch(process->pagedir);
 
 	phdr = (struct elf_phdr*)((uint8_t*)(data + ehdr->e_phoff));
@@ -28,6 +30,10 @@ thread_entry elf_load(uint8_t *data, struct process* process) {
 			}
 		}
 	}
+
+	pagedir_switch(r);
+	sti();
+
 	return (thread_entry)ehdr->e_entry;
 }
 

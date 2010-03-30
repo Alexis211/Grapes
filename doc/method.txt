@@ -1,0 +1,1 @@
+All methods are defined in src/include/gm/method.h and src/include/gm/m/*

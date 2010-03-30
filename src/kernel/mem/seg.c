@@ -71,3 +71,24 @@ int simpleseg_handleFault(struct segment_map* sm, size_t addr, int write) {
 
 void simpleseg_delete(struct segment* seg) {
 }
+
+int simpleseg_resize(struct segment_map *map, size_t len) {
+	size_t i;
+
+	if (map == 0) return -1;
+	if (map->seg->delete != simpleseg_delete) return -2;
+
+	struct simpleseg *s = (struct simpleseg*)map->seg->seg_data;
+	if (len & 0xFFF) len = (len & 0xFFFFF000) + 0x1000;
+	if (len < map->len) {
+		for (i = map->start + len; i < map->start + map->len; i += 0x1000) {
+			page_unmapFree(pagedir_getPage(map->pagedir, i, 0));
+		}
+		map->len = len;
+		s->len = len;
+	} else if (len > map->len) {
+		map->len = len;
+		s->len = len;
+	}
+	return 0;
+}

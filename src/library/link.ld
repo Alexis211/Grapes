@@ -2,7 +2,7 @@ ENTRY (start)
 INPUT (grapes.o)
  
 SECTIONS{
-    . = 0x10000000;
+    . = 0x100000;
  
     .text : {
         *(.text)

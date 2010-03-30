@@ -8,6 +8,8 @@ LDFLAGS = -r
 
 Library = grapes.o
 Objects = gc/syscall.o \
+		  gc/mem.o \
+		  gc/object.o \
 		  start.o
 
 all: $(Library)

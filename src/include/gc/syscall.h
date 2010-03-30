@@ -21,6 +21,7 @@ struct user_sendrequest {
 	uint32_t func, a, b, c;
 	uint32_t answeri;
 	int64_t answerll;
+	int errcode;
 };
 
 void thread_exit();
@@ -38,9 +39,10 @@ int object_owned(int descriptor);
 void object_close(int descriptor);
 int request_get(int descriptor, struct user_request *rq, int wait);
 int request_has(int descriptor);
-void request_answer(int descriptor, int answer1, int answer2);
+void request_answer(int descriptor, uint32_t answer1, uint32_t answer2, int errcode);
 int request_mapShm(int descriptor, size_t offset, int number);
 int request(int descriptor, struct user_sendrequest *rq);
 int send_msg(int descriptor, struct user_sendrequest *rq);
+int proc_setheap(size_t start, size_t end);
 
 #endif

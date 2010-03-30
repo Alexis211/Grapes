@@ -1,0 +1,12 @@
+** 		0.0.4 'Cat in my heart'				**
+- [OK] Userland heap (meaning kernel can give memory to processes)
+- Userland helper functions for objects (server and client)
+- Basic object method for knowing if object handles another method (list methods in src/include/gm)
+- Userland library for writing numbers and other stuff
+- A manager module that manages all other running modules (the privilege of manager is given by the kernel to the first module loaded)
+
+**		0.0.5 'Truth is better cold'		**
+- Review privilege system
+- Driver processes can ask to map physical memory in their address space
+- Describe interfaces for server (any service's main object), reader and writer.
+- Keyboard driver, userland display driver, virtual terminal driver

@@ -24,6 +24,7 @@ struct request {
 		int64_t ll;
 		uint32_t n;
 	} answer;
+	int errcode;	//returned when function has finished
 };
 
 struct user_request {
@@ -35,12 +36,13 @@ struct user_sendrequest {
 	uint32_t func, a, b, c;
 	uint32_t answeri;
 	int64_t answerll;
+	int errcode;
 };
 
 //syscalls
 int request_get(int obj, uint32_t ptr, int wait);
 int request_has(int obj);
-void request_answer(int obj, uint32_t answer, uint32_t answer2);		//answer2 used for long long.
+void request_answer(int obj, uint32_t answer, uint32_t answer2, int errcode);		//answer2 used for long long.
 int request_mapShm(int obj, uint32_t pos, int number);
 
 int request(int obj, uint32_t rq_ptr);

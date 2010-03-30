@@ -32,6 +32,8 @@ struct process {
 	struct obj_descriptor *objects;
 	uint32_t next_objdesc;
 
+	struct segment_map *heapseg;
+
 	struct process *next;	//Forms a linked list
 };
 
@@ -62,5 +64,6 @@ void thread_exit();
 void process_exit(uint32_t retval);
 struct thread * thread_new(struct process *proc, thread_entry entry_point, void *data);
 struct process* process_new(struct process *parent, uint32_t uid, uint32_t privilege);
+int process_setheapseg(size_t start, size_t end);	//syscall
 
 #endif

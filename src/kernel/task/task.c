@@ -77,6 +77,7 @@ void tasking_switch() {
 	}
 
 	current_thread = thread_next();
+	pagedir_switch(current_thread->process->pagedir);
 
 	gdt_setKernelStack(((uint32_t)current_thread->kernelStack_addr) + current_thread->kernelStack_size);
 
@@ -278,6 +279,7 @@ struct process *process_new(struct process* parent, uint32_t uid, uint32_t privi
 	p->pagedir = pagedir_new();
 	p->next = processes;
 	p->stacksBottom = 0xDF000000;
+	p->heapseg = 0;
 
 	p->next_objdesc = 0;
 	p->objects = 0;
@@ -289,6 +291,7 @@ struct process *process_new(struct process* parent, uint32_t uid, uint32_t privi
 
 static void thread_delete(struct thread *th) {
 	kfree(th->kernelStack_addr);
+	if (th->userStack_seg != 0) seg_unmap(th->userStack_seg);
 	th->process->threads--;
 	if (threads == th) {
 		threads = th->next;
@@ -318,4 +321,25 @@ static void process_delete(struct process *pr) {
 		if (it != 0 && it->next == pr) it->next = pr->next;
 	}
 	kfree(pr);
+}
+
+int process_setheapseg(size_t start, size_t end) {		//syscall
+	struct process *p = current_thread->process;
+	if (start >= 0xE0000000 || end >= 0xE0000000) return -1;
+	if (p->heapseg == 0) {
+		struct segment *s = simpleseg_make(start, end - start, 1);
+		if (s == 0) return -5;
+		p->heapseg = seg_map(s, p->pagedir, 0);
+		if (p->heapseg == 0) return -1;
+		return 0;
+	} else if (p->heapseg->start != start) {
+		seg_unmap(p->heapseg);
+		struct segment *s = simpleseg_make(start, end - start, 1);
+		if (s == 0) return -5;
+		p->heapseg = seg_map(s, p->pagedir, 0);
+		if (p->heapseg == 0) return -1;
+		return 0;
+	} else {
+		return simpleseg_resize(p->heapseg, end - start);
+	}
 }

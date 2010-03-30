@@ -1,0 +1,8 @@
+This is the memory layout of a standard service :
+
+- 0x00100000 to 0x20000000 		Application's code and static data
+- 0x20000000 to 0x6F000000		Application's heap
+- 0x70000000 to 0x80000000		Free space, can be used for mapping device memory
+- 0x80000000 to 0xD0000000		Space for mapping shared memory segments
+- 0xD0000000 to 0xDF000000		Stacks (automatically allocated by kernel, size 0x8000 each)
+- 0xE0000000 to 0xFFFFFFFF		Kernel code and heap
