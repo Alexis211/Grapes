@@ -20,7 +20,11 @@ int request_get(int id, uint32_t ptr, int wait) {
 	//when request pending (wait finished), write it to ptr
 	struct user_request *p = (struct user_request*)ptr;
 	p->func = obj->request->func;
-	for (i = 0; i < 3; i++) p->params[i] = obj->request->params[i];
+	for (i = 0; i < 3; i++) {
+		p->params[i] = obj->request->params[i];
+		if (obj->request->shm_sndr[i] != 0) p->shmsize[i] = obj->request->shm_sndr[i]->len;
+		else p->shmsize[i] = 0;
+	}
 	p->isBlocking = (obj->request->requester != 0);
 	//if request is nonblocking and no shm is to be mapped, delete request and unlock objects busymutex, else set it to acknowledged
 	if (p->isBlocking) return 0;

@@ -13,7 +13,7 @@ typedef char		int8_t;
 typedef unsigned size_t;
 
 struct user_request {
-	uint32_t func, params[3];
+	uint32_t func, params[3], shmsize[3];
 	int isBlocking;		// 1 : blocking request, 0 : nonblocking request (message)
 };
 

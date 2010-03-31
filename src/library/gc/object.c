@@ -1,12 +1,14 @@
 #include <gc/server.h>
 #include <gm/method.h>
 #include <gc/mem.h>
+#include <gc/shm.h>
 
 Server procServer;
 static Server* servers = 0;
 
 static method_handler getHandler(Server *o, uint32_t m);
 static struct method_ret checkIfHandles(struct method_data *d);
+static struct method_ret checkIfHandlesMany(struct method_data *d);
 
 void objsrv_init() {
 	procServer.id = 0;
@@ -15,6 +17,7 @@ void objsrv_init() {
 	procServer.data = 0;
 	servers = &procServer;
 	srv_addHandler(&procServer, M_HANDLECHECK_BIVV, checkIfHandles);
+	srv_addHandler(&procServer, M_HANDLECHECK_BMIV, checkIfHandlesMany);
 }
 
 void srv_handleAll() {
@@ -55,8 +58,12 @@ void srv_handle(Server *o, int act) {
 						case PT_SHM:		//all the fuss about keepShm only applies to messages.
 							md.parameters[i].keepShm = 1;	//if local memory or if nothing, do not unmap it
 							if (rq.params[i] == 0) {	//TODO : map shm (shm manager) !!!
-								md.parameters[i].val.p = 0;
-								//md.parameters[i].keepShm = 0;	//we had to map it, so mark it to be unmapped
+								void* p = shm_alloc(rq.shmsize[i]);
+								md.parameters[i].val.p = p;
+								if (p != 0) {
+									request_mapShm(o->id, (size_t)p, i);
+									md.parameters[i].keepShm = 0;	//we had to map it, so mark it to be unmapped
+								}
 							} else {
 								md.parameters[i].val.p = (void*)rq.params[i];
 							}
@@ -73,7 +80,7 @@ void srv_handle(Server *o, int act) {
 				} else {
 					for (i = 0; i < 3; i++) {
 						if (md.parameters[i].type == PT_SHM && md.parameters[i].keepShm == 0) {
-							//TODO : unmap shm
+							shm_freeDel(md.parameters[i].val.p);
 						}
 					}
 				}
@@ -97,6 +104,7 @@ Server *srv_create() {
 	s->data = 0;
 	s->next = servers;
 	srv_addHandler(s, M_HANDLECHECK_BIVV, checkIfHandles);
+	srv_addHandler(s, M_HANDLECHECK_BMIV, checkIfHandlesMany);
 	servers = s;
 	return s;
 }
@@ -141,6 +149,17 @@ method_handler getHandler(Server *o, uint32_t m) {
 struct method_ret checkIfHandles(struct method_data *d) {
 	if (getHandler(d->obj, d->parameters[0].val.i) == 0) {
 		return mr_long(0);
+	}
+	return mr_long(1);
+}
+
+struct method_ret checkIfHandlesMany(struct method_data *d) {
+	if (d->parameters[0].type != PT_SHM) return mr_err(-1);
+	if (d->parameters[1].type != PT_LONG) return mr_err(-1);
+	uint32_t *data = d->parameters[0].val.p, i;
+	if (data == 0) return mr_long(0);
+	for (i = 0; i < d->parameters[1].val.i; i++) {
+		if (getHandler(d->obj, data[i]) == 0) return mr_long(0);
 	}
 	return mr_long(1);
 }
