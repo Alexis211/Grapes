@@ -9,7 +9,7 @@ LDFLAGS = -r
 Library = grapes.o
 Objects = gc/syscall.o gc/server.o \
 		  gc/mem.o gc/shm.o \
-		  std/mutex.o \
+		  std/mutex.o std/string.o \
 		  start.o
 
 all: $(Library)
