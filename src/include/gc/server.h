@@ -74,6 +74,7 @@ void srv_handle(Server* o, int act);
 
 Server *srv_create();
 void srv_delete(Server *o);
+Server *srv_get(int descriptor);
 void srv_addHandler(Server* o, uint32_t method, method_handler h);
 
 #endif

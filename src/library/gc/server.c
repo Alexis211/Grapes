@@ -109,6 +109,15 @@ Server *srv_create() {
 	return s;
 }
 
+Server *srv_get(int descriptor) {
+	Server *s = servers;
+	while (s) {
+		if (s->id == descriptor) return s;
+		s = s->next;
+	}
+	return 0;
+}
+
 void srv_delete(Server* s) {
 	//remove s from servers
 	if (servers == s) {

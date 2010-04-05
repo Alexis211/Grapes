@@ -1,6 +1,6 @@
 .PHONY: clean, mrproper, Init.rfs, floppy, commit
 
-Projects = kernel library modules/test
+Projects = kernel library modules/manager modules/test
 
 Floppy = Grapes.fl.img
 

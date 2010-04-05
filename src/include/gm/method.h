@@ -19,4 +19,7 @@
 /* 	Checks if object handles that method. In case BIVV, only one method is checked for.
  *  In case BMIV, the [b] methods in shared memory [a] are checked, first one not found returns false. */
 
+#define M_NOTHING_VVVV	(2)
+/*	This method does nothing, it just checks message transmission to an object. */
+
 #endif

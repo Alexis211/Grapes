@@ -9,6 +9,8 @@
 
 #define KSTACKSIZE 0x8000
 
+static struct object *manager_object = 0;
+
 //Static routines for handling threads exiting and all cleanup
 static void thread_exit_stackJmp(uint32_t reason);
 static void thread_exit2(uint32_t reason);
@@ -109,6 +111,7 @@ uint32_t tasking_handleException(struct registers *regs) {
     "Page Fault","Unknown Interrupt","Coprocessor Fault","Alignment Check","Machine Check"};
 	monitor_write(exception_messages[regs->int_no]);
 	monitor_write(" at "); monitor_writeHex(regs->eip);
+	PANIC("kk");
 	if (regs->int_no == 14) {
 		monitor_write("\n>>> Process exiting.\n");
 		thread_exit_stackJmp(EX_PR_EXCEPTION);
@@ -283,7 +286,10 @@ struct process *process_new(struct process* parent, uint32_t uid, uint32_t privi
 
 	p->next_objdesc = 0;
 	p->objects = 0;
-	obj_createP(p);	//create process' root object and add descriptor 0 to it
+	struct object* o = obj_new(p);
+	if (manager_object == 0) manager_object = o;
+	objdesc_add(p, o);	//create process' root object and add descriptor 0 to it
+	objdesc_add(p, manager_object);
 
 	processes = p;
 	return p;
@@ -307,8 +313,8 @@ static void process_delete(struct process *pr) {
 	struct thread *it;
 	while (threads != 0 && threads->process == pr) thread_delete(threads);
 	it = threads;
-	while (it != 0) {
-		while (it->next->process == pr) thread_delete(it->next);
+	while (it != 0 && it->next != 0) {
+		while (it->next != 0 && it->next->process == pr) thread_delete(it->next);
 		it = it->next;
 	}
 	obj_closeall(pr);

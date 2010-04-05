@@ -1,6 +1,7 @@
 #include <gc/syscall.h>
 #include <gc/mem.h>
 #include <gc/server.h>
+#include <gm/method.h>
 
 #define FACTOR 4
 
@@ -15,7 +16,7 @@ struct method_ret nulhandle(struct method_data *d) {
 void thread2(void* d) {
 	printk("[test:2] Creating new object...\n");
 	Server *s = srv_create();
-	srv_addHandler(s, 0x00000010, nulhandle);
+	srv_addHandler(s, M_NOTHING_VVVV, nulhandle);
 	obj = s->id;
 	while (1) {
 		printk("[test:2] Waiting for a request...\n");
@@ -32,10 +33,12 @@ int main() {
 	while (obj == -1);
 	printk("[test:1] Object was created. Sending request...\n");
 	struct user_sendrequest sr;
-	sr.func = 0x00000010;
+	sr.func = M_NOTHING_VVVV;
 	request(obj, &sr);
-	printk("[test:1] Got answer. Sending message...\n");
-	send_msg(obj, &sr);
+	printk("[test:1] Got answer. Now sending request to manager...\n");
+	request(1, &sr);
+	printk("[test:1] And now a message to manager...\n");
+	send_msg(1, &sr);
 
 	printk("[test:1] testing malloc and free...");
 	int* v = malloc(10 * sizeof(int));
@@ -52,7 +55,7 @@ int main() {
 	free(v); free(vv);
 	printk("nothing bad happened :)\n");
 
-	printk("[test:1] HAHA !!! Death in 10 seconds!\n");
-	thread_sleep(10000);
+	printk("[test:1] HAHA !!! Death of [test] in 1 seconds!\n");
+	thread_sleep(1000);
 	return 0;
 }

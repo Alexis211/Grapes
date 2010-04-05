@@ -26,6 +26,7 @@ int request_get(int id, uint32_t ptr, int wait) {
 		else p->shmsize[i] = 0;
 	}
 	p->isBlocking = (obj->request->requester != 0);
+	p->pid = obj->request->pid;
 	//if request is nonblocking and no shm is to be mapped, delete request and unlock objects busymutex, else set it to acknowledged
 	if (p->isBlocking) return 0;
 	for (i = 0; i < 3; i++) {
@@ -149,6 +150,7 @@ static struct request *mkrequest(int id, struct thread *requester,
 	rq->func = func;
 	for (i = 0; i < 3; i++) { rq->params[i] = 0; rq->obj_close[i] = 0; rq->shm_sndr[i] = 0; rq->shm_rcv[i] = 0; }
 	rq->acknowledged = RS_PENDING;
+	rq->pid = current_thread->process->pid;
 	//  integers: use as is
 	//  objects: open a new descriptor in receiver process (if same process, keep number), put that number as an int
 	//   if receiver already had descriptor to this object, use it and set obj_close to 0, else set obj_close to new number

@@ -4,10 +4,10 @@ CC = gcc
 CFLAGS = -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -Wall -Wextra -I ../../include
 
 LD = ld
-LDFLAGS = -T ../../library/link.ld -L ../../library -Map test.map
+LDFLAGS = -T ../../library/link.ld -L ../../library -Map manager.map
 
 Objects = main.o
-Outfile = test.elf
+Outfile = manager.elf
 
 all: $(Outfile)
 	echo "* Done with $(Outfile)"

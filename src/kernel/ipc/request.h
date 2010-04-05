@@ -25,11 +25,13 @@ struct request {
 		uint32_t n;
 	} answer;
 	int errcode;	//returned when function has finished
+	int pid;	//pid of caller
 };
 
 struct user_request {
 	uint32_t func, params[3], shmsize[3];
 	int isBlocking;		// 1 : blocking request, 0 : nonblocking request (message)
+	int pid;		//pid of caller process
 };
 
 struct user_sendrequest {

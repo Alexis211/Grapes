@@ -26,10 +26,10 @@ void* shm_alloc(size_t size) {
 	if (blocks == 0) shm_init();
 	if (size & 0xFFF) size = (size & 0xFFFFF000) + 0x1000;
 	//go through all blocks, get the one with the closest size
-	struct shm_block *block = blocks;
-	while (block) {
-		if (block->size >= size) break;
-		block = block->next;
+	struct shm_block *i = blocks, *block = 0;
+	while (i) {
+		if (i->size >= size && i->is_hole == 1 && i->size < block->size) block = i;
+		i = i->next;
 	}
 	if (block == 0) {
 		mutex_unlock(&tMutex);

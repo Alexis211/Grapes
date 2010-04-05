@@ -1,0 +1,17 @@
+The manager is a service whose role is to manage all other services. By default, all loaded modules
+get a descriptor to the manager service (descriptor 1).
+
+Each service has a set of ressources that can get a descriptor by openning them. These ressources
+are identified by a string, such as :
+kbd:readtext
+file:root/System/
+console:myuser/main
+
+To open these objects, a process would call the open() method on the manager object. The manager would
+then call the open() method on the corresponding process with the string after the first semicolon
+(for example: open("file:root/System") would call file.open("root/System")).
+
+If the string is just a service name (like open("kbd")), the manager would return a descriptor to the
+root object for that service.
+
+The manager is also the one that handle log entries for services, for the moment by printing them on the screen.
