@@ -28,7 +28,7 @@ static uint32_t nextpid = 1;
 struct process *processes = 0, *kernel_process;
 struct thread *threads = 0, *current_thread = 0, *idle_thread;
 
-uint32_t tasking_tmpStack[0x4000];
+uint32_t tasking_tmpStack[KSTACKSIZE];
 
 void tasking_init() {
 	cli();
@@ -54,7 +54,9 @@ static struct thread *thread_next() {
 		if (thread_runnable(ret)) {
 		   return ret;
 		}
-		if (ret == current_thread) return idle_thread;
+		if (ret == current_thread) {
+			return idle_thread;
+		}
 	}
 }
 
@@ -110,8 +112,17 @@ uint32_t tasking_handleException(struct registers *regs) {
     "Coprocessor Segment Overrun","Bad TSS","Segment Not Present","Stack Fault","General Protection Fault",
     "Page Fault","Unknown Interrupt","Coprocessor Fault","Alignment Check","Machine Check"};
 	monitor_write(exception_messages[regs->int_no]);
-	monitor_write(" at "); monitor_writeHex(regs->eip);
-	PANIC("kk");
+	monitor_write(" eip:"); monitor_writeHex(regs->eip);
+	if (regs->eip >= 0xE0000000) {
+		monitor_write("\n  Stack trace :");
+		uint32_t *stack = (uint32_t*)regs->ebp, i;
+		for (i = 0; i < 5 && stack > 0xE0000000 && stack < (regs->useresp + 0x8000); i++) {
+			monitor_write("\nframe@"); monitor_writeHex(stack);
+			monitor_write(" next:"); monitor_writeHex(stack[0]); monitor_write(" ret:"); monitor_writeHex(stack[1]);
+			stack = (uint32_t*)stack[0];
+		}
+		PANIC("Kernel error'd.");
+	}
 	if (regs->int_no == 14) {
 		monitor_write("\n>>> Process exiting.\n");
 		thread_exit_stackJmp(EX_PR_EXCEPTION);
@@ -140,7 +151,7 @@ void thread_wakeUp(struct thread* t) {
 }
 
 int proc_priv() {
-	if (current_thread == 0) return PL_UNKNOWN;
+	if (current_thread == 0 || current_thread->process == 0) return PL_UNKNOWN;
 	return current_thread->process->privilege;
 }
 
@@ -151,20 +162,21 @@ void thread_exit2(uint32_t reason) {		//See EX_TH_* defines in task.h
 	 * if reason is none of the two cases above, it is the whole process exiting (with error code = reason)
 	 */
 	struct thread *th = current_thread;
+	if (th == 0 || th->process == 0) goto retrn;
 	struct process *pr = th->process;
 	if ((reason == EX_TH_NORMAL || reason == EX_TH_EXCEPTION) && pr->threads > 1) {
 		thread_delete(th);
 	} else {
 		process_delete(pr);
 	}
-	sti();
+	retrn:
 	tasking_switch();
 }
 
 void thread_exit_stackJmp(uint32_t reason) {
-	uint32_t *stack;
 	cli();
-	stack = tasking_tmpStack + 0x4000;
+	uint32_t *stack;
+	stack = tasking_tmpStack + (KSTACKSIZE / 4);
 	stack--; *stack = reason;
 	stack--; *stack = 0;
 	asm volatile("			\
@@ -296,36 +308,49 @@ struct process *process_new(struct process* parent, uint32_t uid, uint32_t privi
 }
 
 static void thread_delete(struct thread *th) {
-	kfree(th->kernelStack_addr);
-	if (th->userStack_seg != 0) seg_unmap(th->userStack_seg);
-	th->process->threads--;
 	if (threads == th) {
 		threads = th->next;
 	} else {
 		struct thread *it = threads;
-		while (it->next != th && it->next != 0) it = it->next;
-		if (it->next == th) it->next = th->next;
+		while (it) {
+			if (it->next == th) {
+				it->next = th->next;
+				break;
+			}
+			it = it->next;
+		}
 	}
+	if (current_thread == th) current_thread = 0;
+	th->process->threads--;
+	kfree(th->kernelStack_addr);
+	if (th->userStack_seg != 0) seg_unmap(th->userStack_seg);
 	kfree(th);
 }
 
 static void process_delete(struct process *pr) {
-	struct thread *it;
-	while (threads != 0 && threads->process == pr) thread_delete(threads);
-	it = threads;
-	while (it != 0 && it->next != 0) {
-		while (it->next != 0 && it->next->process == pr) thread_delete(it->next);
-		it = it->next;
+	struct thread *it = threads;
+	while (it != 0) {
+		if (it->process == pr) {
+			thread_delete(it);
+			it = threads;
+		} else {
+			it = it->next;
+		}
 	}
 	obj_closeall(pr);
-	pagedir_delete(pr->pagedir);
 	if (processes == pr) {
 		processes = pr->next;
 	} else {
 		struct process *it = processes;
-		while (it != 0 && it->next != pr) it = it->next;
-		if (it != 0 && it->next == pr) it->next = pr->next;
+		while (it) {
+			if (it->next == pr) {
+				it->next = pr->next;
+				break;
+			}
+			it = it->next;
+		}
 	}
+	pagedir_delete(pr->pagedir);
 	kfree(pr);
 }
 

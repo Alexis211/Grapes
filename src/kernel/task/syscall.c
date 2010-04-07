@@ -12,6 +12,7 @@
 #define CALL1V(name, scname) static void scname(struct registers* r) { name(r->ebx); }
 #define CALL2V(name, scname) static void scname(struct registers* r) { name(r->ebx, r->ecx); }
 #define CALL3V(name, scname) static void scname(struct registers* r) { name(r->ebx, r->ecx, r->edx); }
+#define CALL4V(name, scname) static void scname(struct registers* r) { name(r->ebx, r->ecx, r->edx, r->esi); }
 
 CALL0V(thread_exit, thread_exit_sc);
 CALL0V(tasking_switch, schedule_sc);
@@ -27,7 +28,7 @@ CALL1(object_owned, object_owned_sc);
 CALL1V(object_close, object_close_sc);
 CALL3(request_get, request_get_sc);
 CALL1(request_has, request_has_sc);
-CALL3V(request_answer, request_answer_sc);
+CALL4V(request_answer, request_answer_sc);
 CALL3(request_mapShm, request_mapShm_sc);
 CALL2(request, request_sc);
 CALL2(send_msg, send_msg_sc);

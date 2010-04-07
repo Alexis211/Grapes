@@ -1,5 +1,6 @@
 #include "seg.h"
 #include "mem.h"
+#include <core/sys.h>
 
 struct segment_map *seg_map(struct segment* seg, struct page_directory *pagedir, size_t offset) {
 	struct segment_map *sm = seg->map(seg, pagedir, offset);

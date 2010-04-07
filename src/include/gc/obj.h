@@ -5,10 +5,6 @@
 #define ME_UNHANDLED -32767
 #define ME_INTERRUPTED -32766
 
-struct object_cli {
-	int id;
-};
-
-typedef struct object_cli Object;
+typedef int Object;
 
 #endif

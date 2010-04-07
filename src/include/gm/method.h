@@ -22,4 +22,6 @@
 #define M_NOTHING_VVVV	(2)
 /*	This method does nothing, it just checks message transmission to an object. */
 
+#include "method/manager.h"
+
 #endif

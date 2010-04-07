@@ -2,6 +2,7 @@
 #include <mem/mem.h>
 #include <mem/seg.h>
 #include <task/task.h>
+#include <core/sys.h>
 
 struct segment* shmseg_make(size_t len, struct process* owner) {
 	struct shmseg *ss = kmalloc(sizeof(struct shmseg));
@@ -29,8 +30,9 @@ struct segment_map *shmseg_map(struct segment *seg, struct page_directory *paged
 
 void shmseg_unmap(struct segment_map *sm) {
 	size_t i;
-	for (i = sm->start; i < sm->start + sm->len; i += 0x1000) {
-		page_unmap(pagedir_getPage(sm->pagedir, i, 0));
+	for (i = 0; i < sm->len; i += 0x1000) {
+		struct page *page = pagedir_getPage(sm->pagedir, sm->start + i, 0);
+		if (page != 0) page_unmap(page);
 	}
 }
 

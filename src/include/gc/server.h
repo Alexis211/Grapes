@@ -16,11 +16,13 @@ struct method_data {
 		union {
 			int i;
 			void* p;
-		} val;
+		};
 		int type;
 		int keepShm;		//for messages : keep shared memory segment after return or unmap ? (default : 0 = unmap)
+		size_t shmsize;
 	} parameters[3];
 	uint32_t func;
+	int pid;
 	int blocking;	//1 : blocking request, 0 : message
 	struct object_srv *obj;
 };
@@ -37,10 +39,18 @@ struct method_ret {
 //helper function for creating return values
 struct method_ret mr_long(int val);
 struct method_ret mr_llong(int64_t val);
-struct method_ret mr_obj(Object* obj);
+struct method_ret mr_obj(Object obj);
 struct method_ret mr_srv(struct object_srv* obj);
 struct method_ret mr_void();
 struct method_ret mr_err(int error);
+
+// for checking if a string passed in shared memory is valid
+#define CHKSSTR(md, n) { size_t _i, _ok = 0; if (md->parameters[n].p == 0) return mr_err(-1); \
+	for (_i = 0; _i < md->parameters[n].shmsize; _i++) {	\
+		if (*((char*)md->parameters[n].p + _i) == 0) {	\
+			_ok = 1; break; \
+		} 	 } \
+	if (!_ok && md->parameters[n].shmsize != 0) return mr_err(-1); }
 
 typedef struct method_ret (*method_handler)(struct method_data*);
 

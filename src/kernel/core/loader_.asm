@@ -31,7 +31,7 @@ loader:		;here, we load our false GDT, used for having the kernel in higher half
 section .text
 higherhalf:		; now we're running in higher half
 
-   mov esp, tasking_tmpStack+0x4000           ; set up the stack
+   mov esp, tasking_tmpStack+0x8000           ; set up the stack
    push eax                           ; pass Multiboot magic number
    add ebx, 0xE0000000				  ; update the MB info structure so that it is in the new seg
    push ebx                           ; pass Multiboot info structure

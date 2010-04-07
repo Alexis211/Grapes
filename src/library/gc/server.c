@@ -47,25 +47,27 @@ void srv_handle(Server *o, int act) {
 				md.func = rq.func;
 				md.blocking = rq.isBlocking;
 				md.obj = o;
+				md.pid = rq.pid;
 				//get parameters
 				for (i = 0; i < 3; i++) {
 					md.parameters[i].type = (rq.func >> (28 - (2 * i))) & 3;
 					switch (md.parameters[i].type) {
 						case PT_LONG:
 						case PT_OBJDESC:
-							md.parameters[i].val.i = rq.params[i];
+							md.parameters[i].i = rq.params[i];
 							break;
 						case PT_SHM:		//all the fuss about keepShm only applies to messages.
 							md.parameters[i].keepShm = 1;	//if local memory or if nothing, do not unmap it
+							md.parameters[i].shmsize = rq.shmsize[i];
 							if (rq.params[i] == 0) {	//TODO : map shm (shm manager) !!!
 								void* p = shm_alloc(rq.shmsize[i]);
-								md.parameters[i].val.p = p;
+								md.parameters[i].p = p;
 								if (p != 0) {
 									request_mapShm(o->id, (size_t)p, i);
 									md.parameters[i].keepShm = 0;	//we had to map it, so mark it to be unmapped
 								}
 							} else {
-								md.parameters[i].val.p = (void*)rq.params[i];
+								md.parameters[i].p = (void*)rq.params[i];
 							}
 							break;
 					}
@@ -77,10 +79,15 @@ void srv_handle(Server *o, int act) {
 					if (ret.type == PT_OBJDESC || ret.type == PT_LONG) a = ret.i;
 					if (ret.type == PT_LONGLONG) a = (uint32_t)ret.l, b = (uint32_t)((uint64_t)ret.l >> 32);
 					request_answer(o->id, a, b, ret.status);
+					for (i = 0; i < 3; i++) {
+						if (md.parameters[i].type == PT_SHM && md.parameters[i].p != 0) {
+							shm_free(md.parameters[i].p);
+						}
+					}
 				} else {
 					for (i = 0; i < 3; i++) {
 						if (md.parameters[i].type == PT_SHM && md.parameters[i].keepShm == 0) {
-							shm_freeDel(md.parameters[i].val.p);
+							shm_freeDel(md.parameters[i].p);
 						}
 					}
 				}
@@ -156,7 +163,7 @@ method_handler getHandler(Server *o, uint32_t m) {
 }
 
 struct method_ret checkIfHandles(struct method_data *d) {
-	if (getHandler(d->obj, d->parameters[0].val.i) == 0) {
+	if (getHandler(d->obj, d->parameters[0].i) == 0) {
 		return mr_long(0);
 	}
 	return mr_long(1);
@@ -165,9 +172,9 @@ struct method_ret checkIfHandles(struct method_data *d) {
 struct method_ret checkIfHandlesMany(struct method_data *d) {
 	if (d->parameters[0].type != PT_SHM) return mr_err(-1);
 	if (d->parameters[1].type != PT_LONG) return mr_err(-1);
-	uint32_t *data = d->parameters[0].val.p, i;
+	uint32_t *data = d->parameters[0].p, i;
 	if (data == 0) return mr_long(0);
-	for (i = 0; i < d->parameters[1].val.i; i++) {
+	for (i = 0; i < d->parameters[1].i; i++) {
 		if (getHandler(d->obj, data[i]) == 0) return mr_long(0);
 	}
 	return mr_long(1);
@@ -185,8 +192,8 @@ struct method_ret mr_llong(int64_t val) {
 	return r;
 }
 
-struct method_ret mr_obj(Object* obj) {
-	struct method_ret r; r.status = 0; r.type = PT_OBJDESC; r.i = obj->id;
+struct method_ret mr_obj(Object obj) {
+	struct method_ret r; r.status = 0; r.type = PT_OBJDESC; r.i = obj;
 	return r;
 }
 

@@ -17,7 +17,7 @@
 struct request {
 	struct object *obj;
 	struct thread *requester;	//0 if nonblocking message
-	uint32_t func, params[3], obj_close[3];		//obj_close : object descriptors to close when requests yields an answer
+	uint32_t func, params[3], obj_close[3], shmsize[3];		//obj_close : object descriptors to close when requests yields an answer
 	struct segment_map *shm_sndr[3], *shm_rcv[3];
 	int acknowledged;	// (only for blocking requests) 0 : request is pending, 1 : request is being processes, 2 : finished, 3 : interrupted
 	union {

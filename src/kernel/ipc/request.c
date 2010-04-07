@@ -15,15 +15,19 @@ int request_get(int id, uint32_t ptr, int wait) {
 	if (obj->request != 0 && obj->request->acknowledged != RS_PENDING) return -3;
 	//if not (busymutex unlocked and request==0) && wait, then wait, else return -1
 	if (wait == 0 && obj->request == 0) return -1;
-	while (obj->busyMutex != MUTEX_LOCKED && (obj->request == 0 || obj->request->acknowledged != RS_PENDING)) thread_sleep(1);
+	while (obj->busyMutex != MUTEX_LOCKED && (obj->request == 0 || obj->request->acknowledged != RS_PENDING)) {
+		//set thread to be waked up on request
+		obj->wakeupOnRq = current_thread;
+		//go to sleep
+		thread_goInactive();
+	}
 	obj->request->acknowledged = RS_PROCESSED;
 	//when request pending (wait finished), write it to ptr
 	struct user_request *p = (struct user_request*)ptr;
 	p->func = obj->request->func;
 	for (i = 0; i < 3; i++) {
 		p->params[i] = obj->request->params[i];
-		if (obj->request->shm_sndr[i] != 0) p->shmsize[i] = obj->request->shm_sndr[i]->len;
-		else p->shmsize[i] = 0;
+		p->shmsize[i] = obj->request->shmsize[i];
 	}
 	p->isBlocking = (obj->request->requester != 0);
 	p->pid = obj->request->pid;
@@ -69,15 +73,19 @@ void request_answer(int id, uint32_t answer, uint32_t answer2, int errcode) {
 	obj->request->acknowledged = RS_FINISHED;
 	switch (obj->request->func >> 30) {
 		case PT_OBJDESC:
-			if ((int)answer <= 0) {
+			if ((int)answer < 0) {
 				obj->request->answer.n = answer;
 			} else {
 				if (obj->owner == obj->request->requester->process) {
 					obj->request->answer.n = answer;
 				} else {
-					int n = objdesc_get(obj->request->requester->process, objdesc_read(obj->owner, answer));
-					if (n == -1) {
-						n = objdesc_add(obj->request->requester->process, objdesc_read(obj->owner, answer));
+					struct object *o = objdesc_read(obj->owner, answer);
+					int n = -1;
+					if (o != 0) {
+						n = objdesc_get(obj->request->requester->process, o);
+						if (n == -1) {
+							n = objdesc_add(obj->request->requester->process, o);
+						}
 					}
 					obj->request->answer.n = n;
 				}
@@ -110,11 +118,12 @@ int request_mapShm(int id, uint32_t pos, int number) {
 	int n = (obj->request->func >> (28 - (2 * number))) & 3;
 	if (n != PT_SHM) return -4;
 	//check if sender process is different from receiver process, if not return -7
-	if (obj->owner == obj->request->requester->process) return -7;
+	if (obj->request->requester != 0 && obj->owner == obj->request->requester->process) return -7;
 	//check if sender sent a shm seg in parameter [number], if not return -5
 	if (obj->request->shm_sndr[number] == 0) return -5;
 	//map shm to position
 	obj->request->shm_rcv[number] = seg_map(obj->request->shm_sndr[number]->seg, obj->owner->pagedir, pos);
+	obj->request->shm_sndr[number]->seg->mappings--;
 	//if request is nonblocking and no more shm is to be mapped, delete request and free object busymutex
 	if (obj->request->requester != 0) return 0;
 	for (i = 0; i < 3; i++) {
@@ -161,7 +170,7 @@ static struct request *mkrequest(int id, struct thread *requester,
 		uint32_t v = (i == 0 ? a : (i == 1 ? b : c));
 		switch (n) {
 			case PT_OBJDESC:
-				if ((int)v <= 0) {
+				if ((int)v < 0) {
 					rq->params[i] = v;
 				} else {
 					if (obj->owner == current_thread->process) {
@@ -180,16 +189,25 @@ static struct request *mkrequest(int id, struct thread *requester,
 				rq->params[i] = v;
 				break;
 			case PT_SHM:
+				rq->shmsize[i] = 0;
 				if (obj->owner == current_thread->process) {
 					rq->params[i] = v;
+					struct segment_map *t = shmseg_getByOff(current_thread->process, v);
+					if (t != 0) rq->shmsize[i] = t->len;
 				} else {
 					rq->shm_sndr[i] = shmseg_getByOff(current_thread->process, v);
+					rq->shm_sndr[i]->seg->mappings++;
+					if (rq->shm_sndr[i] != 0) rq->shmsize[i] = rq->shm_sndr[i]->len;
 				}
 				break;
 		}
 	}
 	// reference request from object
 	obj->request = rq;
+	if (obj->wakeupOnRq != 0) {
+		thread_wakeUp(obj->wakeupOnRq);
+		obj->wakeupOnRq = 0;
+	}
 	// return request	
 	return rq;
 }
@@ -230,5 +248,6 @@ int send_msg(int obj, uint32_t rq_ptr) {
 	//if returned value is 0, return -1 else return 0
 	if (e != 0) return e;
 	if (rq == 0) return -1;
+	urq->errcode = 0;
 	return 0;
 }

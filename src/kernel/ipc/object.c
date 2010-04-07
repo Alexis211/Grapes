@@ -8,6 +8,7 @@ struct object* obj_new(struct process* owner) {
 	ret->descriptors = 0;
 	ret->busyMutex = MUTEX_UNLOCKED;
 	ret->request = 0;
+	ret->wakeupOnRq = 0;
 	return ret;
 }
 

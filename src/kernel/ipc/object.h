@@ -8,6 +8,7 @@ struct object {
 	int descriptors;
 	uint32_t busyMutex;			//if busy, either a blocking request is being processed, or a sent message is waiting for being recieved
 	struct request *request;
+	struct thread *wakeupOnRq;
 };
 
 struct obj_descriptor {

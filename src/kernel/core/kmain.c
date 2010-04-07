@@ -50,10 +50,11 @@ void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 		if (elf_check((uint8_t*)mods[i].mod_start)) {
 			monitor_write(" : Invalid ELF file\n");
 		} else {
-			if (elf_exec((uint8_t*)mods[i].mod_start, PL_DRIVER) == 0) {
+			struct process *pr = elf_exec((uint8_t*)mods[i].mod_start, PL_DRIVER);
+			if (pr == 0) {
 				monitor_write(" : Error loading\n");
 			} else {
-				monitor_write(" : OK\n");
+				monitor_write(" : OK pid:"); monitor_writeDec(pr->pid); monitor_write("\n");
 			}
 		}
 	}

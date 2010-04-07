@@ -28,7 +28,7 @@ void* shm_alloc(size_t size) {
 	//go through all blocks, get the one with the closest size
 	struct shm_block *i = blocks, *block = 0;
 	while (i) {
-		if (i->size >= size && i->is_hole == 1 && i->size < block->size) block = i;
+		if (i->size >= size && i->is_hole == 1 && (block == 0 || i->size < block->size)) block = i;
 		i = i->next;
 	}
 	if (block == 0) {
@@ -57,7 +57,7 @@ static void unify (struct shm_block *b) {
 	if (b->next == 0 || b->is_hole == 0 || b->next->is_hole == 0) return;
 	struct shm_block *n = b->next;
 	b->size += n->size;
-	n->next->prev = b;
+	if (n->next != 0) n->next->prev = b;
 	b->next = n->next;
 	free(n);
 }

@@ -121,7 +121,7 @@ uint32_t paging_fault(struct registers *regs) {
 		if (regs->err_code & 0x4) monitor_write("user ");
 		if (regs->err_code & 0x8) monitor_write("rsvd ");
 		if (regs->err_code & 0x10) monitor_write("instructionfetch ");
-		monitor_write("@"); monitor_writeHex(addr); monitor_write("\n");
+		monitor_write("cr2:"); monitor_writeHex(addr); monitor_write("\n");
 		return 1;
 	}
 	return 0;
