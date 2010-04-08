@@ -56,7 +56,6 @@ struct method_ret handle_nothing(struct method_data *d) {
 struct method_ret handle_open(struct method_data *d) {
 	CHKSSTR(d, 0);
 	char *svc = d->parameters[0].p;
-	printk("open: "); printk(svc); printk("\n");
 	char *sep, *res;
 	sep = strchr(svc, ':');
 	if (sep != 0) *sep = '0';

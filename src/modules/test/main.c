@@ -38,9 +38,6 @@ int main() {
 	c_logSvc("{1} Sending a test message to manager", LL_STATUS);
 	c_nothing(1, 0);
 
-	Object t = open("test");
-	printk("Open 'test' : "); printk_int(t); printk("\n");
-
 	c_logSvc("{1} Thread now sleeping...", LL_WARNING);
 	while (1) thread_sleep(1000);
 	return 0;

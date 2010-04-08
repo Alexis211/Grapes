@@ -31,7 +31,7 @@ void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 		PANIC("wrong multiboot magic number.");
 	}
 
-	monitor_write("Grapes 0.0.3 'I am no sweet potato' starting up :\n");
+	monitor_write("Grapes 0.0.4 'Cat in my heart' starting up :\n");
 
 	idt_init();
 

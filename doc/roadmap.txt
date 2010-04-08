@@ -1,8 +1,8 @@
 ** 		0.0.4 'Cat in my heart'				**
 - [OK] Userland heap (meaning kernel can give memory to processes)
-- Userland helper functions for objects (server and client, shared memory segment manager)
+- [OK] Userland helper functions for objects (server and client, shared memory segment manager)
 - [OK] Basic object method for knowing if object handles another method (list methods in src/include/gm)
-- A manager module that manages all other running modules (the privilege of manager is given by the kernel to the first module loaded)
+- [OK] A manager module that manages all other running modules (the privilege of manager is given by the kernel to the first module loaded)
 
 **		0.0.5 'Truth is better cold'		**
 - Review privilege system
