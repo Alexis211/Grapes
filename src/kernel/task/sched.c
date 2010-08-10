@@ -4,6 +4,7 @@
 
 static struct thread *queue = 0, *last = 0;
 
+/*	Used by task.c. Enqueus a thread in the queue of threads waiting to run. */
 void sched_enqueue(struct thread *t) {
 	t->queue_next = 0;
 	if (queue == 0) {
@@ -14,6 +15,7 @@ void sched_enqueue(struct thread *t) {
 	}
 }
 
+/*	Used by task.c. Pops a thread from the queue to be run. */
 struct thread *sched_dequeue() {
 	if (queue == 0) return 0;
 	struct thread *it = queue;

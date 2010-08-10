@@ -23,7 +23,7 @@
 typedef void (*thread_entry)(void*);
 
 struct process {
-	uint32_t pid, uid, privilege, threads;
+	uint32_t pid, uid, privilege, thread_count;
 	struct process *parent;
 	struct page_directory *pagedir;
 	size_t stacksBottom;
@@ -34,6 +34,7 @@ struct process {
 	struct segment_map *heapseg;
 
 	struct process *next;	//Forms a linked list
+	struct thread *threads;
 };
 
 struct thread {

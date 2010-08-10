@@ -24,7 +24,7 @@ extern void task_idle(void*);
 
 static uint32_t nextpid = 1;
 struct process *processes = 0, *kernel_process;
-struct thread *threads = 0, *current_thread = 0, *idle_thread;
+struct thread *current_thread = 0, *idle_thread;
 
 uint32_t tasking_tmpStack[KSTACKSIZE];
 
@@ -33,14 +33,14 @@ uint32_t tasking_tmpStack[KSTACKSIZE];
 void tasking_init() {
 	cli();
 	kernel_process = kmalloc(sizeof(struct process));	//This process must be hidden to users
-	kernel_process->pid = kernel_process->uid = kernel_process->threads = 0;
+	kernel_process->pid = kernel_process->uid = kernel_process->thread_count = 0;
 	kernel_process->privilege = PL_KERNEL;
 	kernel_process->parent = kernel_process;
 	kernel_process->pagedir = kernel_pagedir;
 	kernel_process->next = 0;
 	current_thread = 0;
 	idle_thread = thread_new(kernel_process, task_idle, 0);
-	threads = 0;	//Do not include idle thread in threads
+	kernel_process->threads = idle_thread;
 	sti();
 	monitor_write("[Tasking] ");
 }
@@ -158,7 +158,7 @@ void thread_exit2(uint32_t reason) {		//See EX_TH_* defines in task.h
 	struct thread *th = current_thread;
 	if (th == 0 || th->process == 0) goto retrn;
 	struct process *pr = th->process;
-	if ((reason == EX_TH_NORMAL || reason == EX_TH_EXCEPTION) && pr->threads > 1) {
+	if ((reason == EX_TH_NORMAL || reason == EX_TH_EXCEPTION) && pr->thread_count > 1) {
 		thread_delete(th);
 	} else {
 		process_delete(pr);
@@ -247,7 +247,8 @@ static void thread_run(struct thread *thread, thread_entry entry_point, void *da
 struct thread *thread_new(struct process *proc, thread_entry entry_point, void *data) {
 	struct thread *t = kmalloc(sizeof(struct thread));
 	t->process = proc;
-	proc->threads++;
+	t->next = 0;
+	proc->thread_count++;
 
 	if (proc->privilege >= PL_SERVICE) {	//We are running in user mode
 		proc->stacksBottom -= USER_STACK_SIZE;
@@ -271,10 +272,10 @@ struct thread *thread_new(struct process *proc, thread_entry entry_point, void *
 	t->state = TS_RUNNING;
 	sched_enqueue(t);
 
-	if (threads == 0) {
-		threads = t;
+	if (proc->threads == 0) {
+		proc->threads = t;
 	} else {
-		struct thread *i = threads;
+		struct thread *i = proc->threads;
 		while (i->next != 0) i = i->next;
 		i->next = t;
 	}
@@ -286,7 +287,7 @@ struct process *process_new(struct process* parent, uint32_t uid, uint32_t privi
 	struct process* p = kmalloc(sizeof(struct process));
 	p->pid = (nextpid++);
 	p->uid = uid;
-	p->threads = 0;
+	p->thread_count = 0;
 	p->privilege = privilege;
 	p->parent = parent;
 	p->pagedir = pagedir_new();
@@ -307,10 +308,10 @@ struct process *process_new(struct process* parent, uint32_t uid, uint32_t privi
 
 /*	Deletes given thread, freeing the stack(s). */
 static void thread_delete(struct thread *th) {
-	if (threads == th) {
-		threads = th->next;
+	if (th->process->threads == th) {
+		th->process->threads = th->next;
 	} else {
-		struct thread *it = threads;
+		struct thread *it = th->process->threads;
 		while (it) {
 			if (it->next == th) {
 				it->next = th->next;
@@ -320,7 +321,7 @@ static void thread_delete(struct thread *th) {
 		}
 	}
 	if (current_thread == th) current_thread = 0;
-	th->process->threads--;
+	th->process->thread_count--;
 	kfree(th->kernelStack_addr);
 	if (th->userStack_seg != 0) seg_unmap(th->userStack_seg);
 	kfree(th);
@@ -328,14 +329,10 @@ static void thread_delete(struct thread *th) {
 
 /*	Deletes a process. First, deletes all its threads. Also deletes the corresponding page directory. */
 static void process_delete(struct process *pr) {
-	struct thread *it = threads;
+	struct thread *it = pr->threads;
 	while (it != 0) {
-		if (it->process == pr) {
-			thread_delete(it);
-			it = threads;
-		} else {
-			it = it->next;
-		}
+		thread_delete(it);
+		it = it->next;
 	}
 	obj_closeall(pr);
 	if (processes == pr) {
