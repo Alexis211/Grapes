@@ -47,7 +47,7 @@ void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 	gdt_init();
 	paging_cleanup();
 	kheap_init();
-	timer_init(20);
+	timer_init(15);
 	tasking_init();
 	
 	monitor_write("\nLoading modules :\n");

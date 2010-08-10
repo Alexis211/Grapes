@@ -6,7 +6,6 @@
 #include "idt.h"
 
 #define TS_RUNNING 0	
-#define TS_SLEEPING 1	//Sleeping for a defined amount of time
 #define TS_WAKEWAIT 2	//Waiting to be waked up by something precise (thread currently blocked)
 
 #define PL_UNKNOWN 4
@@ -56,7 +55,6 @@ void tasking_switch();
 void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint32_t tablePhysical);
 uint32_t tasking_handleException(struct registers *regs);
 
-void thread_sleep(uint32_t msecs);
 void thread_goInactive();	//Blocks the current thread. it is then waked up by another thread or a system event. 
 void thread_wakeUp(struct thread *t);
 int proc_priv();	//Returns current privilege level

@@ -17,8 +17,6 @@ static void thread_exit2(uint32_t reason);
 static void thread_delete(struct thread *th);
 static void process_delete(struct process *pr);
 
-static uint32_t thread_runnable(struct thread *th);
-
 //From task_.asm
 extern uint32_t read_eip();
 extern void task_idle(void*);
@@ -65,7 +63,7 @@ static struct thread *thread_next() {
 	while (1) {
 		ret = ret->next;
 		if (ret == 0) ret = threads;
-		if (thread_runnable(ret)) {
+		if (ret->state == TS_RUNNING) {
 		   return ret;
 		}
 		if (ret == current_thread) {
@@ -141,14 +139,6 @@ uint32_t tasking_handleException(struct registers *regs) {
 	return 0;
 }
 
-/*	Makes the current thread sleep. */
-void thread_sleep(uint32_t msecs) {
-	if (current_thread == 0) return;
-	current_thread->state = TS_SLEEPING;
-	current_thread->timeWait = timer_time() + msecs;
-	tasking_switch();
-}
-
 /*	Puts the current thread in an inactive state. */
 void thread_goInactive() {
 	current_thread->state = TS_WAKEWAIT;
@@ -213,16 +203,6 @@ void thread_exit() {
 void process_exit(uint32_t retval) {
 	if (retval == EX_TH_NORMAL || retval == EX_TH_EXCEPTION) retval = EX_PR_EXCEPTION;
 	thread_exit_stackJmp(retval);
-}
-
-/*	Nonzero if given thread is not in a waiting state. */
-static uint32_t thread_runnable(struct thread *t) {
-	if (t->state == TS_RUNNING) return 1;
-	if (t->state == TS_SLEEPING && timer_time() >= t->timeWait) {
-		t->state = TS_RUNNING;
-		return 1;
-	}
-	return 0;
 }
 
 /*	For internal use only. This is called when a newly created thread first runs
