@@ -24,7 +24,7 @@ extern void task_idle(void*);
 
 static uint32_t nextpid = 1;
 struct process *processes = 0, *kernel_process;
-struct thread *current_thread = 0, *idle_thread;
+struct thread *current_thread = 0, *idle_thread = 0;
 
 uint32_t tasking_tmpStack[KSTACKSIZE];
 
@@ -76,11 +76,11 @@ void tasking_switch() {
 		current_thread->esp = esp;
 		current_thread->ebp = ebp;
 		current_thread->eip = eip;
-		if (current_thread->state == TS_RUNNING && current_thread != idle_thread) sched_enqueue(current_thread);
+		if (current_thread->state == TS_RUNNING) sched_enqueue(current_thread);
 	}
 
 	current_thread = sched_dequeue();
-	if (current_thread == 0) current_thread = idle_thread;
+	ASSERT(current_thread != 0);
 
 	pagedir_switch(current_thread->process->pagedir);
 

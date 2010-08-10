@@ -34,10 +34,6 @@ void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 			mem_placementAddr = (mods[i].mod_end & 0xFFFFF000) + 0x1000;
 	}
 
-	if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-		PANIC("wrong multiboot magic number.");
-	}
-
 	monitor_write("Grapes 0.0.4 'Cat in my heart' starting up :\n");
 
 	idt_init();
@@ -46,8 +42,9 @@ void kmain(struct multiboot_info_t* mbd, int32_t magic) {
 	paging_init(totalRam);
 	gdt_init();
 	paging_cleanup();
+
 	kheap_init();
-	timer_init(15);
+	timer_init(30);
 	tasking_init();
 	
 	monitor_write("\nLoading modules :\n");
