@@ -65,7 +65,10 @@ struct idt_entry idt_entries[256];
 struct idt_ptr idt_ptr;
 
 static int_callback irq_handlers[16] = {0};
-static struct thread* irq_wakeup[16] = {0};
+static struct irq_waiter {
+	struct thread *thread;
+	struct irq_waiter *next;
+} *irq_wakeup[16] = {0};
 
 /*	Called in idt_.asm when an exception fires (interrupt 0 to 31).
 	Tries to handle the exception, panics if fails. */
@@ -90,9 +93,11 @@ void idt_irqHandler(struct registers regs) {
 		outb(0xA0, 0x20);
 	}
 	outb(0x20, 0x20);
-	if (irq_wakeup[regs.err_code] != 0) {
-		irq_wakeup[regs.err_code]->state = TS_RUNNING;
-		irq_wakeup[regs.err_code] = 0;
+	while (irq_wakeup[regs.err_code] != 0) {
+		struct irq_waiter *tmp = irq_wakeup[regs.err_code];
+		thread_wakeUp(tmp->thread);
+		irq_wakeup[regs.err_code] = tmp->next;
+		kfree(tmp);
 		doSwitch = 1;
 	}
 	if (irq_handlers[regs.err_code] != 0) {
@@ -205,7 +210,11 @@ void idt_handleIrq(int number, int_callback func) {
 /*	Tells the IRQ handler to wake up the current thread when specified IRQ fires. */
 void idt_waitIrq(int number) {
 	if (number < 16 && number >= 0 && proc_priv() <= PL_DRIVER) {
-		irq_wakeup[number] = current_thread;
+		struct irq_waiter *tmp = kmalloc(sizeof(struct irq_waiter));
+		tmp->thread = current_thread;
+		tmp->next = irq_wakeup[number];
+		irq_wakeup[number] = tmp;
+
 		thread_goInactive();
 	}
 }

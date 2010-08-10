@@ -61,10 +61,7 @@ void thread_sleep(uint32_t msecs) {
 	sf->wakeup_time = timer_time() + msecs;
 	sf->thread = current_thread;
 	//Insert it at the right place
-	if (sleeping_threads == 0) {
-		sleeping_threads = sf;
-		sf->next = 0;
-	} else if (sleeping_threads->wakeup_time >= sf->wakeup_time) {
+	if (sleeping_threads == 0 || sleeping_threads->wakeup_time >= sf->wakeup_time) {
 		sf->next = sleeping_threads;
 		sleeping_threads = sf;
 	} else {
