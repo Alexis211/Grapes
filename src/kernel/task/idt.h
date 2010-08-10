@@ -1,6 +1,12 @@
 #ifndef DEF_IDT_H
 #define DEF_IDT_H
 
+/*	The IDT is the system descriptor table that tells the CPU what to do when an interrupt fires.
+	There are three categories of interrupts :
+	- Exceptions ; ex: page fault, divide by 0
+	- IRQ : interrupts caused by hardware
+	- System calls : when an applications asks the system to do something */
+
 #include <types.h>
 
 struct idt_entry {

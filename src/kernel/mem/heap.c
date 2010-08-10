@@ -6,6 +6,7 @@
 
 /* *******************			HEADER    	   ****************** */
 
+/*	For internal use only. Inserts a hole in the heap's hole index at the correct position. */
 static void heapIdx_insert(struct heap *heap, struct heap_header *e) {
 	if ((heap->idxused + sizeof(struct heap_header*) + (size_t)heap->idx) >= heap->start_addr) return;
 
@@ -28,6 +29,7 @@ static void heapIdx_insert(struct heap *heap, struct heap_header *e) {
 	}
 }
 
+/* For internal use only. Removes a hole from the heap's hole index. */
 static void heapIdx_remove(struct heap *heap, struct heap_header *e) {
 	uint32_t iterator;
 	for (iterator = 0; iterator < heap->idxused; iterator++) {
@@ -43,6 +45,7 @@ static void heapIdx_remove(struct heap *heap, struct heap_header *e) {
 
 /* ********************			CONTENTS		********************* */
 
+/*	Initializes the heap, creates the correct data structures. */
 void heap_create(struct heap *heap, size_t start, size_t idxsize, size_t datasize, size_t maxdatasize) {
 	uint32_t i;
 
@@ -71,6 +74,7 @@ void heap_create(struct heap *heap, size_t start, size_t idxsize, size_t datasiz
 	heapIdx_insert(heap, hole);
 }
 
+/*	For internal use only. Called by heap_alloc when necessary. Expands the heap to take more space. */
 static uint32_t heap_expand(struct heap *heap, size_t quantity) {
 	uint32_t i;
 
@@ -116,6 +120,7 @@ static uint32_t heap_expand(struct heap *heap, size_t quantity) {
 	return 1;
 }
 
+/*	For internal use only. Called by heap_free when necessary. Reduces the heap's size. */
 static void heap_contract(struct heap *heap) {
 	struct heap_footer *last_footer = (struct heap_footer*)(heap->end_addr - sizeof(struct heap_footer));
 	struct heap_header *last_header = last_footer->header;
@@ -142,6 +147,7 @@ static void heap_contract(struct heap *heap) {
 	}
 }
 
+/*	Alocate some bytes on the heap. */
 void* heap_alloc(struct heap *heap, size_t sz) {
 	size_t newsize = sz + sizeof(struct heap_header) + sizeof(struct heap_footer);
 	uint32_t iterator = 0;
@@ -185,6 +191,7 @@ void* heap_alloc(struct heap *heap, size_t sz) {
 	return (void*)((size_t)loc + sizeof(struct heap_header));
 }
 
+/*	Frees a block previously allocated on the heap. */
 void heap_free(struct heap *heap, void* ptr) {
 	if (ptr == 0) return;
 	if ((size_t)ptr < heap->start_addr || (size_t)ptr > heap->end_addr) return;

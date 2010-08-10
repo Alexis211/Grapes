@@ -67,6 +67,8 @@ struct idt_ptr idt_ptr;
 static int_callback irq_handlers[16] = {0};
 static struct thread* irq_wakeup[16] = {0};
 
+/*	Called in idt_.asm when an exception fires (interrupt 0 to 31).
+	Tries to handle the exception, panics if fails. */
 void idt_isrHandler(struct registers regs) {
 	if ((regs.int_no == 14 && paging_fault(&regs) != 0) || regs.int_no != 14) {
 		if (tasking_handleException(&regs) == 0) {
@@ -80,6 +82,8 @@ void idt_isrHandler(struct registers regs) {
 	}
 } 
 
+/*	Called in idt_.asm when an IRQ fires (interrupt 32 to 47)
+	Possibly wakes up a thread that was waiting, possibly calls a handler. */
 void idt_irqHandler(struct registers regs) {
 	uint32_t doSwitch = (regs.err_code == 0);	//IRQ0 = timer
 	if (regs.err_code > 7) {
@@ -97,14 +101,15 @@ void idt_irqHandler(struct registers regs) {
 	if (doSwitch) tasking_switch();
 }
 
+/*	Called in idt_.asm on a system call (interrupt 64).
+	Calls the correct syscall handler (if any). */
 void idt_syscallHandler(struct registers regs) {
-	if (syscalls[regs.eax] != 0) {
+	if (regs.eax < NUMBER_OF_SYSCALLS && syscalls[regs.eax] != 0) {
 		syscalls[regs.eax](&regs);
-	} else {
-		monitor_write("Unhandled syscall...\n");
 	}
 }
 
+/*	For internal use only. Sets up an entry of the IDT with given parameters. */
 static void idt_setGate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags) {
 	idt_entries[num].base_lo = base & 0xFFFF;
 	idt_entries[num].base_hi = (base >> 16) & 0xFFFF;
@@ -114,6 +119,7 @@ static void idt_setGate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
 	idt_entries[num].flags = flags | 0x60;
 }
 
+/*	Remaps the IRQs. Sets up the IDT. */
 void idt_init() {
 	idt_ptr.limit = (sizeof(struct idt_entry) * 256) - 1;
 	idt_ptr.base = (uint32_t)&idt_entries;
@@ -189,12 +195,14 @@ void idt_init() {
 	monitor_write("[IDT] ");
 }
 
+/*	Sets up an IRQ handler for given IRQ. */
 void idt_handleIrq(int number, int_callback func) {
 	if (number < 16 && number >= 0) {
 		irq_handlers[number] = func;
 	}
 }
 
+/*	Tells the IRQ handler to wake up the current thread when specified IRQ fires. */
 void idt_waitIrq(int number) {
 	if (number < 16 && number >= 0 && proc_priv() <= PL_DRIVER) {
 		irq_wakeup[number] = current_thread;

@@ -1,6 +1,11 @@
 #ifndef DEF_HEAP_H
 #define DEF_HEAP_H
 
+/*	The heap is the data structure that permits allocating and freeing memory easily.
+	The functions in this file are only used by mem.c, which provides kmalloc and kfree.
+	The heap algorithm used is the one described here : 
+	http://www.jamesmolloy.co.uk/tutorial_html/7.-The%20Heap.html */
+
 #include "types.h"
 
 struct heap_header {

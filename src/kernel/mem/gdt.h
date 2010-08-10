@@ -3,6 +3,11 @@
 
 #include <types.h>
 
+/*	The GDT is one of the x86's descriptor tables. It is used for memory segmentation.
+	Here, we don't use segmentation to separate processes from one another (this is done with paging).
+	We only use segmentation to make the difference between kernel mode (ring 3) and user mode (ring 0) */
+
+/* 	One entry of the table */
 struct gdt_entry {
 	uint16_t limit_low;
 	uint16_t base_low;
@@ -12,11 +17,15 @@ struct gdt_entry {
 	uint8_t base_high;
 } __attribute__((packed));
 
+/*	Structure defining the whole table : address and size (in bytes). */
 struct gdt_ptr {
 	uint16_t limit;
 	uint32_t base;
 } __attribute__((packed));
 
+/*	The TSS is used for hardware multitasking.
+	We don't use that, but we still need a TSS so that user mode process exceptions
+	can be handled correctly by the kernel.	*/
 struct tss_entry {
 	uint32_t prev_tss;   // The previous TSS - if we used hardware task switching this would form a linked list.
 	uint32_t esp0;       // The stack pointer to load when we change to kernel mode.

@@ -38,7 +38,7 @@ static void thread_new_sc(struct registers* r) {
 	thread_new(current_thread->process, (thread_entry)r->ebx, (void*)r->ecx);
 }
 
-int_callback syscalls[] = {
+int_callback syscalls[NUMBER_OF_SYSCALLS] = {
 	thread_exit_sc,			//0
 	schedule_sc,
 	thread_sleep_sc,

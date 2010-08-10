@@ -22,6 +22,7 @@ static struct freepage {
 } freepages[FREEPAGESTOKEEP];
 uint32_t freepagecount = 0;
 
+/*	For internal use only. Populates the cache of pages that can be given to requesters. */
 static void get_free_pages() {
 	static uint32_t locked = 0;
 	uint32_t i;
@@ -49,6 +50,7 @@ static void get_free_pages() {
 	locked = 0;
 }
 
+/*	Gives one page from the cache to someone requesting it. */
 void* kmalloc_page(size_t *phys) {
 	cli();
 	get_free_pages();
@@ -72,12 +74,14 @@ void kfree_page(void* ptr) {
 
 static struct heap kheap;
 
+/*	Called on kernel start. Creates the kernel heap. */
 void kheap_init() {
 	heap_create(&kheap, (mem_placementAddr & 0xFFFFF000) + 0x1000, KHEAP_IDXSIZE, KHEAP_INITSIZE, KHEAP_MAXSIZE);
 	kheap_working = 1;
 	monitor_write("[KHeap] ");
 }
 
+/*	Allocates on the heap if possible. If not possible, allocates just after the kernel code. */
 void* kmalloc(size_t size) {
 	if (kheap_working) {
 		return heap_alloc(&kheap, size);

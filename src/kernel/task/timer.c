@@ -5,6 +5,8 @@
 
 static uint32_t tick = 0, frequency = 0, uptime = 0;
 
+/*	Called when IRQ0 fires. Updates the uptime variable.
+	DOES NOT provoke a task switch. The task switch is called in idt.c (IRQ handler). */
 void timer_callback(struct registers *regs) {
 	tick++;
 	if (tick == frequency) {
@@ -13,12 +15,15 @@ void timer_callback(struct registers *regs) {
 	}
 }
 
+/*	Accessor function to get machine uptime. */
 uint32_t timer_uptime() { return uptime; }
 
+/*	Accessor function, gets uptime in miliseconds. */
 uint32_t timer_time() {
 	return (uptime * 1000) + (tick * 1000 / frequency);
 }
 
+/*	Called by kmain. Sets up the PIT and the IRQ0 handler. */
 void timer_init(uint32_t freq) {
 	frequency = freq;
 

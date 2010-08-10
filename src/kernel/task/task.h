@@ -57,13 +57,14 @@ void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint3
 uint32_t tasking_handleException(struct registers *regs);
 
 void thread_sleep(uint32_t msecs);
-void thread_goInactive();	//Blocks the current thread. another one must be there to wake it up at some point.
+void thread_goInactive();	//Blocks the current thread. it is then waked up by another thread or a system event. 
 void thread_wakeUp(struct thread *t);
 int proc_priv();	//Returns current privilege level
-void thread_exit();
-void process_exit(uint32_t retval);
 struct thread * thread_new(struct process *proc, thread_entry entry_point, void *data);
 struct process* process_new(struct process *parent, uint32_t uid, uint32_t privilege);
+
+void thread_exit();	//syscall
+void process_exit(uint32_t retval);	//syscall
 int process_setheapseg(size_t start, size_t end);	//syscall
 
 #endif

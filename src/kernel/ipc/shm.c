@@ -4,6 +4,13 @@
 #include <task/task.h>
 #include <core/sys.h>
 
+static struct segment_map* shmseg_map(struct segment* seg, struct page_directory *pagedir, size_t offset);
+static void shmseg_unmap(struct segment_map*);
+static void shmseg_delete(struct segment *seg);
+static int shmseg_handleFault(struct segment_map *map, size_t addr, int write);
+
+/*	Call this function when creating a new shared memory segment.
+	Creates the shmseg struct and segment struct, fills them in. */
 struct segment* shmseg_make(size_t len, struct process* owner) {
 	struct shmseg *ss = kmalloc(sizeof(struct shmseg));
 	struct segment *se = kmalloc(sizeof(struct segment));
@@ -21,6 +28,8 @@ struct segment* shmseg_make(size_t len, struct process* owner) {
 	return se;
 }
 
+/*	For internal use only. Called when the shared memory is mapped somewhere.
+	Creates the segment_map struct and fills it up. */
 struct segment_map *shmseg_map(struct segment *seg, struct page_directory *pagedir, size_t offset) {
 	struct segment_map *sm = kmalloc(sizeof(struct segment_map));
 	sm->start = offset;
@@ -28,6 +37,8 @@ struct segment_map *shmseg_map(struct segment *seg, struct page_directory *paged
 	return sm;
 }
 
+/*	For internal use only. Called when the shared memory is unmapped from somewhere.
+	Unmaps all the pages from that place. */
 void shmseg_unmap(struct segment_map *sm) {
 	size_t i;
 	for (i = 0; i < sm->len; i += 0x1000) {
@@ -36,6 +47,8 @@ void shmseg_unmap(struct segment_map *sm) {
 	}
 }
 
+/*	For internal use only. Called when a page fault occurs.
+	Maps a page at that place, possibly requesting a free frame first. */
 int shmseg_handleFault(struct segment_map *sm, size_t addr, int write) {
 	struct shmseg *ss = sm->seg->seg_data;
 	addr &= 0xFFFFF000;
@@ -49,6 +62,8 @@ int shmseg_handleFault(struct segment_map *sm, size_t addr, int write) {
 	return 0;
 }
 
+/*	For internal use only. Called when the shared memory is deleted.
+	Frees all the frames. */
 void shmseg_delete(struct segment *seg) {
 	struct shmseg *ss = seg->seg_data;
 	unsigned i;
@@ -58,6 +73,7 @@ void shmseg_delete(struct segment *seg) {
 	kfree(ss->frames);
 }
 
+/*	Looks through the mapped segment for a process, looking for a shared memory segment at given offset. */
 struct segment_map* shmseg_getByOff(struct process* pr, size_t offset) {
 	struct segment_map* m = pr->pagedir->mappedSegs;
 	while (m != 0) {

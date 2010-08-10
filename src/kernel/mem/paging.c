@@ -11,7 +11,9 @@ static struct bitset frames;
 
 struct page_directory *kernel_pagedir, *current_pagedir;
 
-/* ACCESSOR FUNCTIONS FOR STATIC BITSET */
+/**************************		PHYSICAL MEMORY ALLOCATION	************************/
+
+/*	Allocates a page of physical memory. */
 uint32_t frame_alloc() {
 	uint32_t free = bitset_firstFree(&frames);
 	bitset_set(&frames, free);
@@ -22,6 +24,13 @@ void frame_free(uint32_t id) {
 	bitset_clear(&frames, id);
 }
 
+/*************************		PAGING INITIALIZATION		*****************************/
+
+/*	This function creates the kernel page directory. It must be called before the GDT is loaded.
+	It maps 0xE0000000+ to the corresponding physical kernel code, but it also maps
+	0x00000000+ to that code because with the false GDT we set up in loader_.asm,
+	the code will be looked for at the beginning of the memory. Only when the real GDT is loaded
+	we can de-allocate pages at 0x00000000 ; this is done by paging_cleanup. */
 void paging_init(size_t totalRam) {
 	uint32_t i;
 
@@ -50,6 +59,7 @@ void paging_init(size_t totalRam) {
 	monitor_write("} [Paging] ");
 }
 
+/*	De-allocates pages at 0x00000000 where kernel code was read from with the GDT from loader_.asm. */
 void paging_cleanup() {
 	uint32_t i;
 	for (i = 0; i < (mem_placementAddr - 0xE0000000) / 0x100000; i++) {
@@ -59,6 +69,10 @@ void paging_cleanup() {
 	monitor_write("[PD Cleanup] ");
 }
 
+/*************************		PAGING EVERYDAY USE		*****************************/
+
+/*	Switch to a page directory. Can be done if we are sure not to be interrupted by a task switch.
+	Example use for cross-memory space writing in linker/elf.c */
 void pagedir_switch(struct page_directory *pd) {
 	current_pagedir = pd;
 	asm volatile("mov %0, %%cr3" : : "r"(pd->physicalAddr));
@@ -68,6 +82,7 @@ void pagedir_switch(struct page_directory *pd) {
 	asm volatile("mov %0, %%cr0" : : "r"(cr0));
 }
 
+/*	Creates a new page directory for a process, and maps the kernel page tables on it. */
 struct page_directory *pagedir_new() {
 	uint32_t i;
 
@@ -87,6 +102,7 @@ struct page_directory *pagedir_new() {
 	return pd;
 }
 
+/*	Deletes a page directory, cleaning it up. */
 void pagedir_delete(struct page_directory *pd) {
 	uint32_t i;
 	//Unmap segments
@@ -99,6 +115,9 @@ void pagedir_delete(struct page_directory *pd) {
 	kfree(pd);
 }
 
+/*	Handle a paging fault. First, looks for the corresponding segment.
+	If the segment was found and it handles the fault, return normally.
+	Else, display informatinos and return an error. */
 uint32_t paging_fault(struct registers *regs) {
 	size_t addr;
 	struct segment_map *seg = 0;
@@ -127,6 +146,9 @@ uint32_t paging_fault(struct registers *regs) {
 	return 0;
 }
 
+/*	Gets the corresponding page in a page directory for a given address.
+	If make is set, the necessary page table can be created.
+	Can return 0 if make is not set. */
 struct page *pagedir_getPage(struct page_directory *pd, uint32_t address, int make) {
 	address /= 0x1000;
 	uint32_t table_idx = address / 1024;
@@ -145,6 +167,7 @@ struct page *pagedir_getPage(struct page_directory *pd, uint32_t address, int ma
 	}
 }
 
+/*	Modifies a page structure so that it is mapped to a frame. */
 void page_map(struct page *page, uint32_t frame, uint32_t user, uint32_t rw) {
 	if (page != 0 && page->frame == 0 && page->present == 0) {
 		page->present = 1;
@@ -154,6 +177,7 @@ void page_map(struct page *page, uint32_t frame, uint32_t user, uint32_t rw) {
 	}
 }
 
+/*	Modifies a page structure so that it is no longer mapped to a frame. */
 void page_unmap(struct page *page) {
 	if (page != 0) {
 		page->frame = 0;
@@ -161,6 +185,7 @@ void page_unmap(struct page *page) {
 	}
 }
 
+/*	Same as above but also frees the frame. */
 void page_unmapFree(struct page *page) {
 	if (page != 0) {
 		if (page->frame != 0) frame_free(page->frame);

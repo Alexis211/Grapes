@@ -1,6 +1,7 @@
 #include "mutex.h"
 #include <task/task.h>
 
+/*	Internal use only. This function is atomic, meaning it cannot be interrupted by a system task switch. */
 static uint32_t atomic_exchange(uint32_t* ptr, uint32_t newval) {
 	uint32_t r;
 	asm volatile("xchg (%%ecx), %%eax" : "=a"(r) : "c"(ptr), "a"(newval));

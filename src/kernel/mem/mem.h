@@ -1,6 +1,9 @@
 #ifndef DEF_MEM_H
 #define DEF_MEM_H
 
+/*	mem.c provides the kernel's allocation and freeing functions.
+	kmalloc_page and kfree_page are used mostly for paging. */
+
 #include <types.h>
 
 void* kmalloc_page(size_t *phys);

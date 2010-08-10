@@ -4,6 +4,9 @@
 static int cursor_x = 0, cursor_y = 0;
 static uint16_t *video_memory = (uint16_t*)0xE00B8000;
 
+static uint8_t attribute = 0x07; // 0 = background = black, 7 = foreground = white
+
+/*	For internal use only. Tells hardware to move the cursor at (cursor_x, cursor_y). */
 static void move_cursor() {
 	uint16_t cursor_location = cursor_y * 80 + cursor_x;
 	outb(0x3D4, 14);	//Sending high cursor byte
@@ -12,9 +15,9 @@ static void move_cursor() {
 	outb(0x3D5, cursor_location);
 }
 
+/*	For internal use only. Scrolls everything up one line. */
 static void scroll() {
-	uint8_t attribute_byte = (0 /* black */ << 4) | (7/* white */ & 0x0F);
-	uint16_t blank = (attribute_byte << 8) | 0x20;
+	uint16_t blank = (attribute << 8) | 0x20;
 
 	if (cursor_y >= 25) {
 		int i;
@@ -28,16 +31,11 @@ static void scroll() {
 	}
 }
 
+/*	Put one character on the screen. This function handles special characters \b, \t, \r and  \n. */
 void monitor_put(char c) {
-	uint8_t fg = 7;	//White
-	uint8_t bg = 0; //Black
-
-	uint16_t attribute = (fg & 0x0F) | (bg << 4);
-	attribute = attribute << 8;
-
-	if (c == 0x08 && cursor_x) {	//Backspace
+	if (c == '\b' && cursor_x) {	//Backspace
 		cursor_x--;
-	} else if (c == 0x09) {	//Tab
+	} else if (c == '\t') {	//Tab
 		cursor_x = (cursor_x + 8) & ~(8 - 1);
 	} else if (c == '\r') {	//Carriage return
 		cursor_x = 0;
@@ -45,7 +43,7 @@ void monitor_put(char c) {
 		cursor_x = 0;
 		cursor_y++;
 	} else if (c >= ' ') {	//Any printable character
-		video_memory[cursor_y * 80 + cursor_x] = c | attribute;
+		video_memory[cursor_y * 80 + cursor_x] = c | (attribute << 8);
 		cursor_x++;
 	}
 	if (cursor_x >= 80) {
@@ -57,9 +55,9 @@ void monitor_put(char c) {
 	move_cursor();
 }
 
+/* Clears the screen and moves cursor to (0,0) (top left corner) */
 void monitor_clear() {
-	uint8_t attribute_byte = (0 /* black */ << 4) | (15 /* white */ & 0x0F);
-	uint16_t blank = (attribute_byte << 8) | 0x20;
+	uint16_t blank = (attribute << 8) | 0x20;
 
 	int i;
 
@@ -71,12 +69,14 @@ void monitor_clear() {
 	move_cursor();
 }
 
+/* Writes a string to the monitor */
 void monitor_write(char *s) {
 	while (*s) {
 		monitor_put(*(s++));
 	}
 }
 
+/* Writes a number in hexadecimal notation to the monitor */
 void monitor_writeHex(uint32_t v) {
 	int i;
 
@@ -89,6 +89,7 @@ void monitor_writeHex(uint32_t v) {
 	}
 }
 
+/* Writes a number in decimal notation to the monitor */
 void monitor_writeDec(uint32_t v) {
 	if (v == 0) {
 		monitor_put('0');

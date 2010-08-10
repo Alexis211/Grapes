@@ -1,6 +1,9 @@
 #ifndef DEF_SEG_H
 #define DEF_SEG_H
 
+/*	Segments are pieces of usable memory in a process' address space.
+	They have nothing to do with GDT segments, they are created over paging. */
+
 #include "paging.h"
 
 struct segment_map;
@@ -8,6 +11,7 @@ struct segment {
 	void* seg_data;
 	int mappings;
 
+	// these 4 functions must not be used directly by anyone
 	struct segment_map* (*map)(struct segment* seg, struct page_directory* pagedir, size_t offset);
 	void (*unmap)(struct segment_map*);
 	void (*delete)(struct segment* seg);
@@ -21,8 +25,9 @@ struct segment_map {
 	struct segment_map *next;
 };
 
-//parameter offset in seg_map needs not be used
+//parameter offset in seg_map doesn't need to be used
 struct segment_map *seg_map(struct segment* seg, struct page_directory* pagedir, size_t offset);
+/*	When unmapping a segment, the segment is deleted if it is not mapped anywhere anymore. */
 void seg_unmap(struct segment_map* map);
 
 /// *************************************     SIMPLESEG stuff *****************
@@ -32,11 +37,7 @@ struct simpleseg {
 	size_t start, len;
 };
 
-struct segment* simpleseg_make(size_t start, size_t len, int writable); 
-struct segment_map* simpleseg_map(struct segment* seg, struct page_directory* pagedir, size_t offset);
-void simpleseg_unmap(struct segment_map*);
-void simpleseg_delete(struct segment *seg);
-int simpleseg_handleFault(struct segment_map* map, size_t addr, int write);
+struct segment* simpleseg_make(size_t start, size_t len, int writable);
 int simpleseg_resize(struct segment_map *map, size_t len);
 
 #endif

@@ -17,19 +17,20 @@ static void thread_exit2(uint32_t reason);
 static void thread_delete(struct thread *th);
 static void process_delete(struct process *pr);
 
+static uint32_t thread_runnable(struct thread *th);
+
 //From task_.asm
 extern uint32_t read_eip();
 extern void task_idle(void*);
 
-static uint32_t thread_runnable(struct thread *th);
-
 static uint32_t nextpid = 1;
-
 struct process *processes = 0, *kernel_process;
 struct thread *threads = 0, *current_thread = 0, *idle_thread;
 
 uint32_t tasking_tmpStack[KSTACKSIZE];
 
+/*	Sets up tasking. Called by kmain on startup.
+	Creates a kernel process and an IDLE thread in it. */
 void tasking_init() {
 	cli();
 	kernel_process = kmalloc(sizeof(struct process));	//This process must be hidden to users
@@ -45,6 +46,19 @@ void tasking_init() {
 	monitor_write("[Tasking] ");
 }
 
+/*	Called by the paging functions when a page table is allocated in the kernel space (>0xE0000000).
+	Updates the page directories of all the processes. */
+void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint32_t tablephysical) {
+	if (idx < 896) return;
+	struct process* it = processes;
+	while (it != 0) {
+		it->pagedir->tables[idx] = table;
+		it->pagedir->tablesPhysical[idx] = tablephysical;
+		it = it->next;
+	}
+}
+
+/*	Looks through the list of threads, finds the next thread to run. */
 static struct thread *thread_next() {
 	if (current_thread == 0 || current_thread == idle_thread) current_thread = threads;
 	struct thread *ret = current_thread;
@@ -60,6 +74,7 @@ static struct thread *thread_next() {
 	}
 }
 
+/*	Called when a timer IRQ fires. Does a context switch. */
 void tasking_switch() {
 	if (threads == 0) PANIC("No more threads to run !");
 	asm volatile("cli");
@@ -94,16 +109,8 @@ void tasking_switch() {
 		: : "r"(current_thread->ebp), "r"(current_thread->esp), "r"(current_thread->eip));
 }
 
-void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint32_t tablephysical) {
-	if (idx < 896) return;
-	struct process* it = processes;
-	while (it != 0) {
-		it->pagedir->tables[idx] = table;
-		it->pagedir->tablesPhysical[idx] = tablephysical;
-		it = it->next;
-	}
-}
-
+/*	Called when an exception happens. Provides a stack trace if it was in kernel land.
+	Ends the thread for most exceptions, ends the whole process for page faults. */
 uint32_t tasking_handleException(struct registers *regs) {
 	if (current_thread == 0) return 0;	//No tasking yet
 	NL; WHERE; monitor_write("Unhandled exception : ");
@@ -134,6 +141,7 @@ uint32_t tasking_handleException(struct registers *regs) {
 	return 0;
 }
 
+/*	Makes the current thread sleep. */
 void thread_sleep(uint32_t msecs) {
 	if (current_thread == 0) return;
 	current_thread->state = TS_SLEEPING;
@@ -141,20 +149,25 @@ void thread_sleep(uint32_t msecs) {
 	tasking_switch();
 }
 
+/*	Puts the current thread in an inactive state. */
 void thread_goInactive() {
 	current_thread->state = TS_WAKEWAIT;
 	tasking_switch();
 }
 
+/*	Wakes up the given thread. */
 void thread_wakeUp(struct thread* t) {
 	if (t->state == TS_WAKEWAIT) t->state = TS_RUNNING;
 }
 
+/*	Returns the privilege level of the current process. */
 int proc_priv() {
 	if (current_thread == 0 || current_thread->process == 0) return PL_UNKNOWN;
 	return current_thread->process->privilege;
 }
 
+/*	For internal use only. Called by thread_exit_stackJmp on a stack that will not be deleted.
+	Exits current thread or process, depending on the reason. */
 void thread_exit2(uint32_t reason) {		//See EX_TH_* defines in task.h
 	/*
 	 * if reason == EX_TH_NORMAL, it is just one thread exiting because it has to
@@ -170,9 +183,12 @@ void thread_exit2(uint32_t reason) {		//See EX_TH_* defines in task.h
 		process_delete(pr);
 	}
 	retrn:
+	sti();
 	tasking_switch();
 }
 
+/*	For internal use only. Called by thread_exit and process_exit.
+	Switches to a stack that will not be deleted when current thread is deleted. */
 void thread_exit_stackJmp(uint32_t reason) {
 	cli();
 	uint32_t *stack;
@@ -188,15 +204,18 @@ void thread_exit_stackJmp(uint32_t reason) {
 			"r"(stack), "r"(stack), "r"(thread_exit2), "r"(kernel_pagedir->physicalAddr));
 }
 
+/*	System call. Exit the current thread. */
 void thread_exit() {
 	thread_exit_stackJmp(EX_TH_NORMAL);
 }
 
+/*	System call. Exit the current process. */
 void process_exit(uint32_t retval) {
 	if (retval == EX_TH_NORMAL || retval == EX_TH_EXCEPTION) retval = EX_PR_EXCEPTION;
 	thread_exit_stackJmp(retval);
 }
 
+/*	Nonzero if given thread is not in a waiting state. */
 static uint32_t thread_runnable(struct thread *t) {
 	if (t->state == TS_RUNNING) return 1;
 	if (t->state == TS_SLEEPING && timer_time() >= t->timeWait) {
@@ -206,6 +225,9 @@ static uint32_t thread_runnable(struct thread *t) {
 	return 0;
 }
 
+/*	For internal use only. This is called when a newly created thread first runs
+	(its address is the value given for EIP).
+	It switches to user mode if necessary and calls the entry point. */
 static void thread_run(struct thread *thread, thread_entry entry_point, void *data) {
 	pagedir_switch(thread->process->pagedir);
 	if (thread->process->privilege >= PL_SERVICE) {	//User mode !
@@ -248,6 +270,9 @@ static void thread_run(struct thread *thread, thread_entry entry_point, void *da
 	thread_exit(0);
 }
 
+/*	Creates a new thread for given process.
+	Allocates a kernel stack and a user stack if necessary.
+	Sets up the kernel stack for values to be passed to thread_run. */
 struct thread *thread_new(struct process *proc, thread_entry entry_point, void *data) {
 	struct thread *t = kmalloc(sizeof(struct thread));
 	t->process = proc;
@@ -284,6 +309,7 @@ struct thread *thread_new(struct process *proc, thread_entry entry_point, void *
 	return t;
 }
 
+/*	Creates a new process. Creates a struct process and fills it up. */
 struct process *process_new(struct process* parent, uint32_t uid, uint32_t privilege) {
 	struct process* p = kmalloc(sizeof(struct process));
 	p->pid = (nextpid++);
@@ -307,6 +333,7 @@ struct process *process_new(struct process* parent, uint32_t uid, uint32_t privi
 	return p;
 }
 
+/*	Deletes given thread, freeing the stack(s). */
 static void thread_delete(struct thread *th) {
 	if (threads == th) {
 		threads = th->next;
@@ -327,6 +354,7 @@ static void thread_delete(struct thread *th) {
 	kfree(th);
 }
 
+/*	Deletes a process. First, deletes all its threads. Also deletes the corresponding page directory. */
 static void process_delete(struct process *pr) {
 	struct thread *it = threads;
 	while (it != 0) {
@@ -354,6 +382,7 @@ static void process_delete(struct process *pr) {
 	kfree(pr);
 }
 
+/*	System call. Called by the app to define the place for the heap. */
 int process_setheapseg(size_t start, size_t end) {		//syscall
 	struct process *p = current_thread->process;
 	if (start >= 0xE0000000 || end >= 0xE0000000) return -1;

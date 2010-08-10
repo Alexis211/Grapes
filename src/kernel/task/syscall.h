@@ -3,6 +3,8 @@
 
 #include "idt.h"
 
+#define NUMBER_OF_SYSCALLS 32
+
 extern int_callback syscalls[];
 
 #endif
