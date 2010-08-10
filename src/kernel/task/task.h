@@ -45,7 +45,7 @@ struct thread {
 	uint32_t kernelStack_size;
 	struct segment_map *userStack_seg;
 
-	struct thread *next;	//Forms a linked list
+	struct thread *next, *queue_next;	//queue_next is used in sched.c
 };
 
 extern struct thread *current_thread;

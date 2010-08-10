@@ -1,4 +1,5 @@
 #include "task.h"
+#include "sched.h"
 #include <core/sys.h>
 #include <core/monitor.h>
 #include <mem/mem.h>
@@ -56,25 +57,9 @@ void tasking_updateKernelPagetable(uint32_t idx, struct page_table *table, uint3
 	}
 }
 
-/*	Looks through the list of threads, finds the next thread to run. */
-static struct thread *thread_next() {
-	if (current_thread == 0 || current_thread == idle_thread) current_thread = threads;
-	struct thread *ret = current_thread;
-	while (1) {
-		ret = ret->next;
-		if (ret == 0) ret = threads;
-		if (ret->state == TS_RUNNING) {
-		   return ret;
-		}
-		if (ret == current_thread) {
-			return idle_thread;
-		}
-	}
-}
-
 /*	Called when a timer IRQ fires. Does a context switch. */
 void tasking_switch() {
-	if (threads == 0) PANIC("No more threads to run !");
+	if (processes == 0) PANIC("No processes are running !");
 	asm volatile("cli");
 
 	uint32_t esp, ebp, eip;
@@ -91,9 +76,12 @@ void tasking_switch() {
 		current_thread->esp = esp;
 		current_thread->ebp = ebp;
 		current_thread->eip = eip;
+		if (current_thread->state == TS_RUNNING && current_thread != idle_thread) sched_enqueue(current_thread);
 	}
 
-	current_thread = thread_next();
+	current_thread = sched_dequeue();
+	if (current_thread == 0) current_thread = idle_thread;
+
 	pagedir_switch(current_thread->process->pagedir);
 
 	gdt_setKernelStack(((uint32_t)current_thread->kernelStack_addr) + current_thread->kernelStack_size);
@@ -147,7 +135,10 @@ void thread_goInactive() {
 
 /*	Wakes up the given thread. */
 void thread_wakeUp(struct thread* t) {
-	if (t->state == TS_WAKEWAIT) t->state = TS_RUNNING;
+	if (t->state == TS_WAKEWAIT) {
+		t->state = TS_RUNNING;
+		sched_enqueue(t);
+	}
 }
 
 /*	Returns the privilege level of the current process. */
@@ -278,6 +269,7 @@ struct thread *thread_new(struct process *proc, thread_entry entry_point, void *
 	t->eip = (uint32_t)thread_run;
 
 	t->state = TS_RUNNING;
+	sched_enqueue(t);
 
 	if (threads == 0) {
 		threads = t;
