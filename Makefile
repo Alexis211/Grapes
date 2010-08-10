@@ -5,7 +5,8 @@ Projects = kernel library modules/manager modules/test
 Floppy = Grapes.fl.img
 
 all:
-	for p in $(Projects); do \
+	@for p in $(Projects); do \
+		echo ""; echo "----------------------"; \
 		echo "=> Building $$p"; \
 		make -C src/$$p -s; \
 	done
@@ -13,21 +14,23 @@ all:
 rebuild: mrproper all
 
 clean:
-	for p in $(Projects); do \
-		echo "=> Building $$p"; \
+	@for p in $(Projects); do \
+		echo ""; echo "----------------------"; \
+		echo "=> Cleaning $$p"; \
 		make -C src/$$p clean -s; \
 	done
 
 mrproper:
-	for p in $(Projects); do \
-		echo "=> Building $$p"; \
+	@for p in $(Projects); do \
+		echo ""; echo "----------------------"; \
+		echo "=> Cleaning $$p"; \
 		make -C src/$$p mrproper -s; \
 	done
 
 commit: mrproper
 	git add .
 	git commit -a; exit 0
-	git push github
+	git push origin
 
 floppy:
 	mkdir mnt; exit 0

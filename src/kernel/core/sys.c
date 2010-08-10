@@ -25,7 +25,7 @@ void panic(char* message, char* file, int line) {
 	monitor_write("\n>> PANIC: >>");
 	monitor_write(message); monitor_write("<< at "); monitor_write(file);
 	monitor_write(":"); monitor_writeDec(line);
-	monitor_write("\nSystem halted T_T");
+	monitor_write("\nSystem halted -_-'");
 	asm volatile("cli; hlt");
 }
 

@@ -1,37 +1,13 @@
-.PHONY: clean, mrproper
+Out = grapes.o
+Obj = gc/syscall.o gc/server.o \
+	  gm/call.o gm/call/manager.o \
+	  gc/mem.o gc/shm.o \
+	  std/mutex.o std/string.o std/stdio.o \
+	  start.o
 
-CC = gcc
-CFLAGS = -nostdlib -nostartfiles -nodefaultlibs -fno-builtin -fno-stack-protector -Wall -Wextra -I../include
+include ../common.make
 
-LD = ld
-LDFLAGS = -r
+CFLAGS =  -I../include
 
-Library = grapes.o
-Objects = gc/syscall.o gc/server.o \
-		  gm/call.o gm/call/manager.o \
-		  gc/mem.o gc/shm.o \
-		  std/mutex.o std/string.o std/stdio.o \
-		  start.o
+LDFLAGS += -r
 
-all: $(Library)
-	echo "* Done with library $(Library)"
-
-rebuild: mrproper all
-
-$(Library): $(Objects)
-	echo "* Linking library $(Library)..."
-	$(LD) $(LDFLAGS) $^ -o $@
-
-%.uo: %.c
-	echo "* Compiling $<..."
-	$(CC) $(CFLAGS) -c $< -o $@
-
-clean:
-	echo "* Removing object files..."
-	rm *.o || exit 0
-	rm -rf $(Objects) || exit 0
-
-mrproper: clean
-	echo "* Removing library..."
-	rm *.o || exit 0
-	rm -rf $(Library) || exit 0

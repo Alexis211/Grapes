@@ -1,4 +1,4 @@
-#include <syscall.h>
+#include <gc/syscall.h>
 #include <gm/call.h>
 #include <gm/method.h>
 #include <gc/shm.h>
