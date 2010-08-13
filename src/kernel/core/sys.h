@@ -8,6 +8,8 @@ void outw(uint16_t port, uint16_t value);
 uint8_t inb(uint16_t port);
 uint16_t inw(uint16_t port);
 
+void stack_trace(size_t bp);
+
 #define PANIC(s) panic(s, __FILE__, __LINE__);
 #define ASSERT(s) { if (!(s)) panic_assert(#s, __FILE__, __LINE__); }
 void panic(char* message, char* file, int line);

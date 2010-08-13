@@ -75,12 +75,12 @@ static struct irq_waiter {
 void idt_isrHandler(struct registers regs) {
 	if ((regs.int_no == 14 && paging_fault(&regs) != 0) || regs.int_no != 14) {
 		if (tasking_handleException(&regs) == 0) {
-			monitor_write("  >>  >> SOMETHING BAD HAPPENNED << <<\n");
+			monitor_write("\n  >>  >> SOMETHING BAD HAPPENNED << <<\n");
 			monitor_write("Unhandled exception ");
 			monitor_writeHex(regs.int_no);
 			monitor_write(" @"); monitor_writeHex(regs.eip);
 			monitor_put('\n');
-			PANIC("unhandled exception");
+			PANIC("Unhandled Exception");
 		}
 	}
 } 

@@ -107,13 +107,8 @@ uint32_t tasking_handleException(struct registers *regs) {
 	monitor_write(exception_messages[regs->int_no]);
 	monitor_write(" eip:"); monitor_writeHex(regs->eip);
 	if (regs->eip >= 0xE0000000) {
-		monitor_write("\n  Stack trace :");
-		uint32_t *stack = (uint32_t*)regs->ebp, i;
-		for (i = 0; i < 5 && stack > 0xE0000000 && stack < (regs->useresp + 0x8000); i++) {
-			monitor_write("\nframe@"); monitor_writeHex(stack);
-			monitor_write(" next:"); monitor_writeHex(stack[0]); monitor_write(" ret:"); monitor_writeHex(stack[1]);
-			stack = (uint32_t*)stack[0];
-		}
+		monitor_write("\n  Exception stack trace :");
+		stack_trace(regs->ebp);
 		PANIC("Kernel error'd.");
 	}
 	if (regs->int_no == 14) {
