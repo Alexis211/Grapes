@@ -1,3 +1,5 @@
 To compile Grapes, you will need a i586-elf gcc cross-compiler.
 You can find some scripts to build cross-compilers here :
 	http://github.com/Alexis211/cross-scripts
+	
+You will also need a grub floppy named Grapes.fl.img
